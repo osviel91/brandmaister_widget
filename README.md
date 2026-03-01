@@ -20,6 +20,10 @@ A lightweight macOS-friendly widget page that shows recent contact activity for 
 - `index.html` - widget UI
 - `style.css` - widget styling
 - `widget.js` - data fetch, normalization, filtering, rendering
+- `server.js` - local proxy + static file server
+- `Dockerfile` - container image
+- `compose.deploy.yml` - deploy stack with auto-update (Watchtower)
+- `.github/workflows/docker-publish.yml` - GHCR publish on push to `main`
 
 ## Run locally (recommended)
 
@@ -35,6 +39,50 @@ Optional env vars:
 
 ```bash
 BM_API_KEY=your_token BM_UPSTREAM='https://api.brandmeister.network/v2/talkgroup' node server.js
+```
+
+## GitHub -> Container Auto Deploy (ZimaOS)
+
+This repo includes a full GHCR publish + auto-update flow.
+
+### 1) Push to GitHub
+
+Create repo and push this project to `main`.
+The workflow publishes:
+
+- `ghcr.io/<owner>/<repo>:latest`
+- `ghcr.io/<owner>/<repo>:sha-...`
+
+### 2) Make GHCR image accessible
+
+If your package is private, log in on ZimaOS with a GitHub token that has `read:packages`.
+If public, no login is needed on ZimaOS.
+
+### 3) Deploy on ZimaOS
+
+Copy `compose.deploy.yml` to your board and replace:
+
+- `REPLACE_OWNER`
+- `REPLACE_REPO`
+
+Run:
+
+```bash
+docker compose -f compose.deploy.yml up -d
+```
+
+Open:
+
+- `http://<zima-ip>:8787`
+
+### 4) Auto update behavior
+
+`watchtower` checks every 120 seconds and updates the widget container when `:latest` changes, then removes old image layers (`--cleanup`).
+
+### 5) Optional GHCR auth on ZimaOS
+
+```bash
+echo "<GH_TOKEN>" | docker login ghcr.io -u "<GH_USERNAME>" --password-stdin
 ```
 
 ## Configuration

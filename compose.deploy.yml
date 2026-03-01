@@ -1,0 +1,23 @@
+services:
+  brandmeister-widget:
+    image: ghcr.io/REPLACE_OWNER/REPLACE_REPO:latest
+    container_name: brandmeister-widget
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8787
+      # Optional:
+      # - BM_API_KEY=your_token
+      # - BM_UPSTREAM=https://api.brandmeister.network/v2/talkgroup
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 120 --label-enable --cleanup
