@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BrandMeister TG Activity Widget</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="widget" role="application" aria-label="BrandMeister Talkgroup Activity">
+      <header class="widget__header">
+        <h1 id="title">BrandMeister TG Activity</h1>
+        <div class="header__meta">
+          <span id="status" class="status status--idle">Idle</span>
+          <span id="eventsPerMin" class="status">0 ev/min</span>
+          <span id="updatedAt">Never</span>
+        </div>
+      </header>
+
+      <section class="controls" aria-label="Widget settings">
+        <label>
+          Talkgroup
+          <input id="talkgroupInput" type="number" min="1" step="1" placeholder="e.g. 214" />
+        </label>
+
+        <label>
+          Max rows
+          <input id="maxRowsInput" type="number" min="1" max="50" step="1" value="8" />
+        </label>
+
+        <label>
+          Filter mode
+          <select id="filterModeInput">
+            <option value="talkgroup">Talkgroup only</option>
+            <option value="all">All traffic (debug)</option>
+          </select>
+        </label>
+
+        <label class="checkLabel">
+          Show debug
+          <input id="debugToggleInput" type="checkbox" />
+        </label>
+
+        <label>
+          Poll (sec)
+          <input id="pollSecInput" type="number" min="5" max="300" step="1" value="20" />
+        </label>
+
+        <label>
+          Data source
+          <select id="sourceTypeInput">
+            <option value="rest">REST</option>
+            <option value="websocket">WebSocket</option>
+            <option value="socket">Socket.IO</option>
+          </select>
+        </label>
+
+        <label>
+          Endpoint URL
+          <input
+            id="endpointInput"
+            type="text"
+            placeholder="Socket.IO/WebSocket: https://api.brandmeister.network (paths /infoService/, /tetralh/) | REST: custom endpoint"
+          />
+        </label>
+
+        <label>
+          Auth mode
+          <select id="authModeInput">
+            <option value="none">None</option>
+            <option value="bearer">Bearer token</option>
+            <option value="x-api-key">X-API-Key</option>
+            <option value="api-key">apiKey</option>
+          </select>
+        </label>
+
+        <label>
+          API key / token
+          <input id="apiKeyInput" type="password" placeholder="From BM API Manager" />
+        </label>
+
+        <button id="applyBtn" type="button">Apply</button>
+      </section>
+
+      <section class="tableWrap" aria-live="polite">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Callsign</th>
+              <th>DMR ID</th>
+              <th>TG</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody id="rows">
+            <tr>
+              <td colspan="5" class="empty">Set talkgroup and endpoint, then press Apply.</td>
+            </tr>
+          </tbody>
+        </table>
+        <pre id="debugBox" class="debug" hidden></pre>
+      </section>
+    </main>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script type="module" src="./widget.js"></script>
+  </body>
+</html>
