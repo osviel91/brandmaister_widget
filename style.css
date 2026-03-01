@@ -72,7 +72,7 @@ h1 {
 
 .controls {
   display: grid;
-  grid-template-columns: repeat(9, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 6px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--border);
@@ -119,6 +119,76 @@ input[type="checkbox"] {
   padding: 8px 12px 12px;
 }
 
+.onAir {
+  margin: 10px 12px 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: linear-gradient(145deg, rgba(54, 194, 166, 0.1), rgba(8, 25, 36, 0.85));
+}
+
+.onAir__label {
+  color: var(--muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.onAir__main {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.onAir__callsign {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #d9fff6;
+}
+
+.onAir__name {
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.onAir__meta {
+  margin-top: 6px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.73rem;
+  color: var(--muted);
+}
+
+.configDialog {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #0d1a24;
+  color: var(--ink);
+  width: min(640px, 94vw);
+}
+
+.configDialog::backdrop {
+  background: rgba(2, 8, 14, 0.65);
+  backdrop-filter: blur(2px);
+}
+
+.configDialog__form {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.configDialog__form h2 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.configDialog__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .debug {
   margin: 10px 0 0;
   border: 1px solid var(--border);
@@ -159,6 +229,6 @@ tbody td {
 
 @media (max-width: 900px) {
   .controls {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

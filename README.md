@@ -7,9 +7,13 @@ A lightweight macOS-friendly widget page that shows recent contact activity for 
 - Pulls recent traffic from a configurable BrandMeister endpoint.
 - Filters events by a selected talkgroup (TG).
 - Shows callsign, DMR ID, timestamp, and duration.
+- Shows operator name (when present in BM payload) and TG region label.
+- Highlights current transmission in an `On Air Now` panel.
+- Moves advanced connection settings into a `Config` popup.
 - Shows live throughput (`events/min`) in header.
 - Supports compact layout and optional debug panel toggle.
 - Uses reconnect backoff for realtime sources.
+- Keeps a local history log (browser storage) and supports `Clear log`.
 - Supports two source types:
   - `REST`: polling JSON endpoint.
   - `WebSocket`: raw websocket live feed endpoint.
@@ -95,6 +99,7 @@ Use the controls in the widget:
 - **Auth mode**: choose how to send API Manager credentials.
 - **API key / token**: value generated in BrandMeister API Manager.
 - **Poll (sec)**: only used for REST mode.
+- **Clear log**: clears stored contact history in this browser.
 
 Endpoint URL also supports placeholders:
 
@@ -105,7 +110,7 @@ Example:
 
 - `https://api.brandmeister.network/v2/lastheard?limit={limit}`
 
-Config is persisted in browser `localStorage`.
+Config and contact history are persisted in browser `localStorage`.
 
 ## Why it may fail without proxy
 

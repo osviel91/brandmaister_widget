@@ -1,10 +1,18 @@
 const STORAGE_KEY = "bm-widget-config-v1";
+const HISTORY_STORAGE_KEY = "bm-widget-history-v1";
+const HISTORY_LIMIT = 5000;
 
 const els = {
   title: document.getElementById("title"),
   status: document.getElementById("status"),
   eventsPerMin: document.getElementById("eventsPerMin"),
   updatedAt: document.getElementById("updatedAt"),
+  onAirCallsign: document.getElementById("onAirCallsign"),
+  onAirName: document.getElementById("onAirName"),
+  onAirTg: document.getElementById("onAirTg"),
+  onAirRegion: document.getElementById("onAirRegion"),
+  onAirDmr: document.getElementById("onAirDmr"),
+  onAirTime: document.getElementById("onAirTime"),
   talkgroupInput: document.getElementById("talkgroupInput"),
   maxRowsInput: document.getElementById("maxRowsInput"),
   filterModeInput: document.getElementById("filterModeInput"),
@@ -15,6 +23,10 @@ const els = {
   authModeInput: document.getElementById("authModeInput"),
   apiKeyInput: document.getElementById("apiKeyInput"),
   applyBtn: document.getElementById("applyBtn"),
+  clearLogBtn: document.getElementById("clearLogBtn"),
+  configBtn: document.getElementById("configBtn"),
+  configDialog: document.getElementById("configDialog"),
+  closeConfigBtn: document.getElementById("closeConfigBtn"),
   rows: document.getElementById("rows"),
   debugBox: document.getElementById("debugBox"),
 };
@@ -25,6 +37,8 @@ let ws = null;
 let wsRetryTimer = null;
 let wsReconnectAttempts = 0;
 const recentEventTimes = [];
+let historyEvents = [];
+let tgRegionMap = {};
 
 const defaults = {
   talkgroup: 214,
@@ -76,6 +90,60 @@ function loadConfig() {
 
 function saveConfig(config) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+}
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(events) {
+  localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(events.slice(0, HISTORY_LIMIT)));
+}
+
+function mergeHistory(rawEvents) {
+  if (!Array.isArray(rawEvents) || !rawEvents.length) return;
+  const normalized = rawEvents.map(normalizeEvent);
+  const byKey = new Set(historyEvents.map((e) => e.dedupeKey));
+  for (const ev of normalized) {
+    if (!ev.dedupeKey || byKey.has(ev.dedupeKey)) continue;
+    byKey.add(ev.dedupeKey);
+    historyEvents.push(ev);
+  }
+  historyEvents.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
+  if (historyEvents.length > HISTORY_LIMIT) {
+    historyEvents = historyEvents.slice(0, HISTORY_LIMIT);
+  }
+  saveHistory(historyEvents);
+}
+
+async function loadTalkgroupRegions(config) {
+  try {
+    const proxyUrl = new URL("/api/lastheard", window.location.origin);
+    proxyUrl.searchParams.set("talkgroup", String(config.talkgroup || 214));
+    proxyUrl.searchParams.set("limit", "1");
+    const response = await fetch(proxyUrl.toString(), {
+      headers: {
+        "X-Upstream-Url": "https://api.brandmeister.network/v2/talkgroup",
+        "X-Auth-Mode": config.authMode || "none",
+        "X-Api-Key": config.apiKey || "",
+      },
+    });
+    if (!response.ok) return;
+    const payload = await response.json();
+    if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+      tgRegionMap = payload;
+    }
+  } catch {
+    // Non-critical metadata endpoint.
+  }
 }
 
 function setStatus(text, tone = "idle") {
@@ -216,6 +284,14 @@ function normalizeEvent(raw) {
     "name",
     "alias",
   ]);
+  const operatorName = pick(event, [
+    "SourceName",
+    "sourceName",
+    "name",
+    "operatorName",
+    "fname",
+    "first_name",
+  ]);
 
   const timestampMs = toEpochMs(
     pick(event, [
@@ -251,6 +327,7 @@ function normalizeEvent(raw) {
   return {
     timestampMs,
     callsign: callsign || "Unknown",
+    operatorName: operatorName || "",
     dmrId: dmrId != null ? String(dmrId) : "-",
     tg: Number.isFinite(tg) ? tg : Number.isFinite(tgFromText) ? tgFromText : null,
     durationSec,
@@ -265,6 +342,30 @@ function matchesTalkgroup(ev, talkgroup) {
   if (ev.destinationText.includes(`(${talkgroup})`)) return true;
   if (ev.destinationText.trim() === String(talkgroup)) return true;
   return false;
+}
+
+function getRegionForTg(tg) {
+  if (tg == null) return "";
+  const value = tgRegionMap?.[String(tg)];
+  return typeof value === "string" ? value : "";
+}
+
+function setOnAir(ev) {
+  if (!ev) {
+    els.onAirCallsign.textContent = "-";
+    els.onAirName.textContent = "No active contact";
+    els.onAirTg.textContent = "TG -";
+    els.onAirRegion.textContent = "Region -";
+    els.onAirDmr.textContent = "DMR -";
+    els.onAirTime.textContent = "--:--:--";
+    return;
+  }
+  els.onAirCallsign.textContent = ev.callsign || "-";
+  els.onAirName.textContent = ev.operatorName || "Unknown operator";
+  els.onAirTg.textContent = `TG ${ev.tg ?? "-"}`;
+  els.onAirRegion.textContent = `Region ${getRegionForTg(ev.tg) || "-"}`;
+  els.onAirDmr.textContent = `DMR ${ev.dmrId || "-"}`;
+  els.onAirTime.textContent = formatTimestamp(ev.timestampMs);
 }
 
 function extractEvents(payload) {
@@ -442,12 +543,13 @@ function setDebugInfo(events) {
 
 function renderRows(events, talkgroup, maxRows, filterMode = "talkgroup") {
   if (!events.length) {
-    els.rows.innerHTML = `<tr><td colspan="5" class="empty">No recent traffic found for TG ${talkgroup}.</td></tr>`;
+    els.rows.innerHTML = `<tr><td colspan="7" class="empty">No recent traffic found for TG ${talkgroup}.</td></tr>`;
+    setOnAir(null);
     return;
   }
 
   const normalized = events
-    .map(normalizeEvent)
+    .map((ev) => (ev?.dedupeKey ? ev : normalizeEvent(ev)))
     .sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
 
   const unique = [];
@@ -467,10 +569,13 @@ function renderRows(events, talkgroup, maxRows, filterMode = "talkgroup") {
   if (!filtered.length) {
     els.rows.innerHTML =
       filterMode === "all"
-        ? `<tr><td colspan="5" class="empty">Connected but no decodable events yet.</td></tr>`
-        : `<tr><td colspan="5" class="empty">No matching rows for TG ${talkgroup} in current payload.</td></tr>`;
+        ? `<tr><td colspan="7" class="empty">Connected but no decodable events yet.</td></tr>`
+        : `<tr><td colspan="7" class="empty">No matching rows for TG ${talkgroup} in current payload.</td></tr>`;
+    setOnAir(null);
     return;
   }
+
+  setOnAir(filtered[0]);
 
   els.rows.innerHTML = filtered
     .map(
@@ -478,8 +583,10 @@ function renderRows(events, talkgroup, maxRows, filterMode = "talkgroup") {
         <tr>
           <td>${formatTimestamp(ev.timestampMs)}</td>
           <td>${ev.callsign}</td>
+          <td>${ev.operatorName || "-"}</td>
           <td>${ev.dmrId}</td>
           <td>${ev.tg ?? "-"}</td>
+          <td>${getRegionForTg(ev.tg) || "-"}</td>
           <td>${formatDuration(ev.durationSec)}</td>
         </tr>
       `
@@ -551,18 +658,19 @@ function connectSocket(config) {
     const ingest = (msg) => {
       const parsed = parseInboundPayload(msg);
       if (parsed == null) return;
-      if (Array.isArray(parsed)) buffer.push(...parsed);
-      else buffer.push(parsed);
+      const batch = Array.isArray(parsed) ? parsed : [parsed];
+      buffer.push(...batch);
       if (buffer.length > 250) buffer.shift();
+      mergeHistory(batch);
       renderRows(
-        buffer,
+        historyEvents,
         Number(config.talkgroup),
         Number(config.maxRows),
         String(config.filterMode || "talkgroup")
       );
-      setDebugInfo(buffer);
+      setDebugInfo(batch);
       els.updatedAt.textContent = new Date().toLocaleTimeString();
-      if (buffer.length) finish(buffer.slice());
+      if (historyEvents.length) finish(historyEvents.slice());
     };
 
     const connectCandidate = () => {
@@ -716,10 +824,10 @@ function connectWebSocket(config) {
       receivedAnyMessage = true;
       try {
         const parsed = JSON.parse(event.data);
-        if (Array.isArray(parsed)) buffer.push(...parsed);
-        else buffer.push(parsed);
-        if (Array.isArray(parsed)) noteEvents(parsed.length);
-        else noteEvents(1);
+        const batch = Array.isArray(parsed) ? parsed : [parsed];
+        buffer.push(...batch);
+        noteEvents(batch.length);
+        mergeHistory(batch);
       } catch {
         // Some feeds emit non-JSON control frames.
         return;
@@ -727,7 +835,7 @@ function connectWebSocket(config) {
 
       if (buffer.length > 250) buffer.shift();
       renderRows(
-        buffer,
+        historyEvents,
         Number(config.talkgroup),
         Number(config.maxRows),
         String(config.filterMode || "talkgroup")
@@ -767,7 +875,9 @@ async function pollOnce(config) {
           ? await connectWebSocket(config)
           : await fetchRest(config);
 
-    renderRows(events, talkgroup, maxRows, String(config.filterMode || "talkgroup"));
+    mergeHistory(events);
+    if (Array.isArray(events) && events.length) noteEvents(events.length);
+    renderRows(historyEvents, talkgroup, maxRows, String(config.filterMode || "talkgroup"));
     setDebugInfo(events);
     els.updatedAt.textContent = new Date().toLocaleTimeString();
     if ((config.sourceType === "socket" || config.sourceType === "websocket") && !events.length) {
@@ -780,8 +890,8 @@ async function pollOnce(config) {
     setStatus(`Error: ${error.message}`, "error");
     const isRealtime = config.sourceType === "socket" || config.sourceType === "websocket";
     els.rows.innerHTML = isRealtime
-      ? '<tr><td colspan="5" class="empty">Realtime connection failed. Try Socket.IO mode with `https://api.brandmeister.network`.</td></tr>'
-      : '<tr><td colspan="5" class="empty">Request failed. Recommended: run `node server.js` and open http://127.0.0.1:8787</td></tr>';
+      ? '<tr><td colspan="7" class="empty">Realtime connection failed. Try Socket.IO mode with `https://api.brandmeister.network`.</td></tr>'
+      : '<tr><td colspan="7" class="empty">Request failed. Recommended: run `node server.js` and open http://127.0.0.1:8787</td></tr>';
   }
 }
 
@@ -801,8 +911,7 @@ function applyAndStart() {
   saveConfig(config);
   els.title.textContent = `BrandMeister TG ${config.talkgroup}`;
   els.endpointInput.value = buildEndpoint(config);
-  recentEventTimes.length = 0;
-  updateEventsRate();
+  loadTalkgroupRegions(config);
   if (!config.showDebug) els.debugBox.hidden = true;
 
   stopTimers();
@@ -815,6 +924,7 @@ function applyAndStart() {
 
 function bootstrap() {
   const config = loadConfig();
+  historyEvents = loadHistory();
   els.talkgroupInput.value = config.talkgroup;
   els.maxRowsInput.value = config.maxRows;
   els.filterModeInput.value = config.filterMode || "talkgroup";
@@ -825,9 +935,21 @@ function bootstrap() {
   els.authModeInput.value = config.authMode;
   els.apiKeyInput.value = config.apiKey;
 
+  loadTalkgroupRegions(config);
   setInterval(updateEventsRate, 1000);
   els.debugToggleInput.addEventListener("change", () => {
     if (!els.debugToggleInput.checked) els.debugBox.hidden = true;
+  });
+  els.configBtn.addEventListener("click", () => {
+    els.configDialog.showModal();
+  });
+  els.closeConfigBtn.addEventListener("click", () => {
+    if (els.configDialog.open) els.configDialog.close();
+  });
+  els.clearLogBtn.addEventListener("click", () => {
+    historyEvents = [];
+    saveHistory(historyEvents);
+    renderRows([], Number(els.talkgroupInput.value || 214), Number(els.maxRowsInput.value || 8));
   });
   els.applyBtn.addEventListener("click", applyAndStart);
   applyAndStart();

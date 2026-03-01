@@ -17,7 +17,21 @@
         </div>
       </header>
 
-      <section class="controls" aria-label="Widget settings">
+      <section class="onAir" aria-live="polite">
+        <div class="onAir__label">On Air Now</div>
+        <div class="onAir__main">
+          <span id="onAirCallsign" class="onAir__callsign">-</span>
+          <span id="onAirName" class="onAir__name">No active contact</span>
+        </div>
+        <div class="onAir__meta">
+          <span id="onAirTg">TG -</span>
+          <span id="onAirRegion">Region -</span>
+          <span id="onAirDmr">DMR -</span>
+          <span id="onAirTime">--:--:--</span>
+        </div>
+      </section>
+
+      <section class="controls" aria-label="Quick controls">
         <label>
           Talkgroup
           <input id="talkgroupInput" type="number" min="1" step="1" placeholder="e.g. 214" />
@@ -36,49 +50,8 @@
           </select>
         </label>
 
-        <label class="checkLabel">
-          Show debug
-          <input id="debugToggleInput" type="checkbox" />
-        </label>
-
-        <label>
-          Poll (sec)
-          <input id="pollSecInput" type="number" min="5" max="300" step="1" value="20" />
-        </label>
-
-        <label>
-          Data source
-          <select id="sourceTypeInput">
-            <option value="rest">REST</option>
-            <option value="websocket">WebSocket</option>
-            <option value="socket">Socket.IO</option>
-          </select>
-        </label>
-
-        <label>
-          Endpoint URL
-          <input
-            id="endpointInput"
-            type="text"
-            placeholder="Socket.IO/WebSocket: https://api.brandmeister.network (paths /infoService/, /tetralh/) | REST: custom endpoint"
-          />
-        </label>
-
-        <label>
-          Auth mode
-          <select id="authModeInput">
-            <option value="none">None</option>
-            <option value="bearer">Bearer token</option>
-            <option value="x-api-key">X-API-Key</option>
-            <option value="api-key">apiKey</option>
-          </select>
-        </label>
-
-        <label>
-          API key / token
-          <input id="apiKeyInput" type="password" placeholder="From BM API Manager" />
-        </label>
-
+        <button id="clearLogBtn" type="button">Clear log</button>
+        <button id="configBtn" type="button">Config</button>
         <button id="applyBtn" type="button">Apply</button>
       </section>
 
@@ -88,19 +61,74 @@
             <tr>
               <th>Time</th>
               <th>Callsign</th>
+              <th>Name</th>
               <th>DMR ID</th>
               <th>TG</th>
+              <th>Region</th>
               <th>Duration</th>
             </tr>
           </thead>
           <tbody id="rows">
             <tr>
-              <td colspan="5" class="empty">Set talkgroup and endpoint, then press Apply.</td>
+              <td colspan="7" class="empty">Set talkgroup and endpoint, then press Apply.</td>
             </tr>
           </tbody>
         </table>
         <pre id="debugBox" class="debug" hidden></pre>
       </section>
+
+      <dialog id="configDialog" class="configDialog">
+        <form method="dialog" class="configDialog__form">
+          <h2>Advanced Config</h2>
+
+          <label>
+            Poll (sec)
+            <input id="pollSecInput" type="number" min="5" max="300" step="1" value="20" />
+          </label>
+
+          <label>
+            Data source
+            <select id="sourceTypeInput">
+              <option value="rest">REST</option>
+              <option value="websocket">WebSocket</option>
+              <option value="socket">Socket.IO</option>
+            </select>
+          </label>
+
+          <label>
+            Endpoint URL
+            <input
+              id="endpointInput"
+              type="text"
+              placeholder="Socket.IO/WebSocket: https://api.brandmeister.network | REST: custom endpoint"
+            />
+          </label>
+
+          <label>
+            Auth mode
+            <select id="authModeInput">
+              <option value="none">None</option>
+              <option value="bearer">Bearer token</option>
+              <option value="x-api-key">X-API-Key</option>
+              <option value="api-key">apiKey</option>
+            </select>
+          </label>
+
+          <label>
+            API key / token
+            <input id="apiKeyInput" type="password" placeholder="From BM API Manager" />
+          </label>
+
+          <label class="checkLabel">
+            Show debug
+            <input id="debugToggleInput" type="checkbox" />
+          </label>
+
+          <div class="configDialog__actions">
+            <button id="closeConfigBtn" type="submit">Close</button>
+          </div>
+        </form>
+      </dialog>
     </main>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
