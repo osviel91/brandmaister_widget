@@ -1,6 +1,6 @@
 services:
   brandmeister-widget:
-    image: ghcr.io/REPLACE_OWNER/REPLACE_REPO:latest
+    image: ghcr.io/osviel91/brandmaister_widget:latest
     container_name: brandmeister-widget
     restart: unless-stopped
     ports:
