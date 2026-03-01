@@ -45,6 +45,42 @@ Optional env vars:
 BM_API_KEY=your_token BM_UPSTREAM='https://api.brandmeister.network/v2/talkgroup' node server.js
 ```
 
+## WidgetKit API endpoints
+
+Server now exposes:
+
+- `GET /widget/contacts?tg=214&limit=8`
+- `POST /widget/ingest` with body `{ \"events\": [...] }`
+
+`/widget/contacts` response format:
+
+```json
+{
+  "tg": 214,
+  "updatedAt": 1772372102,
+  "contacts": [
+    {
+      "time": 1772372102,
+      "callsign": "EA4CQH",
+      "name": "Gregorio",
+      "dmrId": "2143971",
+      "tg": 214,
+      "region": "Spain",
+      "durationSec": 1
+    }
+  ]
+}
+```
+
+History persistence:
+
+- Path: `BM_HISTORY_PATH` (default `./widget-history.json`)
+- Limit: `BM_HISTORY_LIMIT` (default `5000`)
+
+Optional bootstrap source if no history exists:
+
+- `BM_WIDGET_UPSTREAM` endpoint template (supports `{tg}`, `{talkgroup}`, `{limit}`)
+
 ## GitHub -> Container Auto Deploy (ZimaOS)
 
 This repo includes a full GHCR publish + auto-update flow.

@@ -6,6 +6,10 @@ const { URL } = require('url');
 const HOST = process.env.HOST || '0.0.0.0';
 const PORT = Number(process.env.PORT || 8787);
 const ROOT = __dirname;
+const HISTORY_PATH = process.env.BM_HISTORY_PATH || path.join(ROOT, 'widget-history.json');
+const HISTORY_LIMIT = Number(process.env.BM_HISTORY_LIMIT || 5000);
+const WIDGET_UPSTREAM = process.env.BM_WIDGET_UPSTREAM || '';
+const TG_REGION_UPSTREAM = process.env.BM_TG_REGION_UPSTREAM || 'https://api.brandmeister.network/v2/talkgroup';
 
 const CONTENT_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -20,9 +24,17 @@ const CONTENT_TYPES = {
 
 const DEFAULT_UPSTREAM =
   process.env.BM_UPSTREAM || 'https://api.brandmeister.network/v2/lastheard?limit={limit}';
+let history = [];
+let tgRegionMap = {};
+let tgRegionLoadedAt = 0;
 
 function send(res, status, body, contentType = 'text/plain; charset=utf-8') {
-  res.writeHead(status, { 'Content-Type': contentType });
+  res.writeHead(status, {
+    'Content-Type': contentType,
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Accept, Authorization, X-API-Key, apiKey',
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+  });
   res.end(body);
 }
 
@@ -41,6 +53,173 @@ function buildAuthHeaders(authMode, apiKey) {
   if (authMode === 'x-api-key') headers['X-API-Key'] = apiKey;
   if (authMode === 'api-key') headers.apiKey = apiKey;
   return headers;
+}
+
+function toEpochMs(value) {
+  if (value == null) return null;
+  if (typeof value === 'number') return value > 1_000_000_000_000 ? value : value * 1000;
+  const n = Number(value);
+  if (!Number.isNaN(n)) return n > 1_000_000_000_000 ? n : n * 1000;
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function pick(obj, keys, fallback = null) {
+  for (const key of keys) {
+    if (obj && obj[key] != null && obj[key] !== '') return obj[key];
+  }
+  return fallback;
+}
+
+function safeParseJson(value) {
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeIncomingEvent(raw) {
+  let event = raw;
+  if (raw && typeof raw.payload === 'string') {
+    const parsedPayload = safeParseJson(raw.payload);
+    if (parsedPayload && typeof parsedPayload === 'object') event = parsedPayload;
+  }
+  if (event && typeof event.payload === 'object') event = event.payload;
+  if (typeof event === 'string') {
+    const parsed = safeParseJson(event);
+    if (parsed && typeof parsed === 'object') event = parsed;
+  }
+
+  const tg = Number(
+    pick(event, [
+      'tgid',
+      'talkgroup',
+      'destination',
+      'destinationid',
+      'DestinationID',
+      'DestinationPointID',
+      'Number',
+      'number',
+    ])
+  );
+
+  const timeMs = toEpochMs(
+    pick(event, ['timestamp', 'time', 'Time', 'Start', 'start', 'seen', 'last_seen', 'date'])
+  );
+  const dmrId = String(pick(event, ['dmrid', 'id', 'src', 'source', 'SourceID', 'radio_id'], ''));
+  const callsign = String(
+    pick(event, ['callsign', 'call', 'SourceCall', 'sourceCall', 'source_callsign'], 'Unknown')
+  );
+  const name = String(pick(event, ['SourceName', 'sourceName', 'name', 'operatorName'], ''));
+  const durationSec = Number(
+    pick(event, ['duration', 'Duration', 'duration_sec', 'slot_time', 'Length', 'length'], 0)
+  ) || 0;
+  const region = String(tgRegionMap[String(tg)] || '');
+  const dedupeKey = `${pick(event, ['SessionID', 'sessionId'], '')}:${pick(
+    event,
+    ['Updated', 'updated', 'time', 'timestamp'],
+    ''
+  )}:${dmrId}:${Number.isFinite(tg) ? tg : ''}`;
+
+  return {
+    time: timeMs ? Math.floor(timeMs / 1000) : 0,
+    callsign,
+    name,
+    dmrId,
+    tg: Number.isFinite(tg) ? tg : 0,
+    region,
+    durationSec,
+    dedupeKey,
+  };
+}
+
+function loadHistoryFromDisk() {
+  try {
+    if (!fs.existsSync(HISTORY_PATH)) return [];
+    const raw = fs.readFileSync(HISTORY_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistoryToDisk() {
+  try {
+    fs.writeFileSync(HISTORY_PATH, JSON.stringify(history.slice(0, HISTORY_LIMIT)));
+  } catch {
+    // Ignore write failures.
+  }
+}
+
+function mergeContacts(entries) {
+  if (!Array.isArray(entries) || !entries.length) return;
+  const normalized = entries.map(normalizeIncomingEvent).filter((e) => e.time > 0 && e.callsign);
+  if (!normalized.length) return;
+  const seen = new Set(history.map((e) => e.dedupeKey));
+  for (const item of normalized) {
+    if (item.dedupeKey && seen.has(item.dedupeKey)) continue;
+    if (item.dedupeKey) seen.add(item.dedupeKey);
+    history.push(item);
+  }
+  history.sort((a, b) => (b.time || 0) - (a.time || 0));
+  if (history.length > HISTORY_LIMIT) history = history.slice(0, HISTORY_LIMIT);
+  saveHistoryToDisk();
+}
+
+async function ensureTgRegionMap() {
+  if (Date.now() - tgRegionLoadedAt < 6 * 60 * 60 * 1000 && Object.keys(tgRegionMap).length) return;
+  try {
+    const response = await fetch(TG_REGION_UPSTREAM, { headers: { Accept: 'application/json' } });
+    if (!response.ok) return;
+    const payload = await response.json();
+    if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+      tgRegionMap = payload;
+      tgRegionLoadedAt = Date.now();
+    }
+  } catch {
+    // Non-fatal.
+  }
+}
+
+async function fetchWidgetUpstream(tg, limit) {
+  if (!WIDGET_UPSTREAM) return [];
+  const upstreamUrl = buildUpstreamUrl(WIDGET_UPSTREAM, tg, limit);
+  const response = await fetch(upstreamUrl, { headers: { Accept: 'application/json' } });
+  if (!response.ok) return [];
+  const payload = await response.json();
+  const list = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.data)
+      ? payload.data
+      : Array.isArray(payload?.items)
+        ? payload.items
+        : Array.isArray(payload?.results)
+          ? payload.results
+          : Array.isArray(payload?.lastheard)
+            ? payload.lastheard
+            : [];
+  return list;
+}
+
+function parseBody(req) {
+  return new Promise((resolve) => {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+      if (body.length > 2_000_000) req.destroy();
+    });
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(body || '{}'));
+      } catch {
+        resolve({});
+      }
+    });
+    req.on('error', () => resolve({}));
+  });
 }
 
 async function handleProxy(req, res, reqUrl) {
@@ -82,6 +261,54 @@ async function handleProxy(req, res, reqUrl) {
   }
 }
 
+async function handleWidgetContacts(req, res, reqUrl) {
+  const tg = Number(reqUrl.searchParams.get('tg') || reqUrl.searchParams.get('talkgroup') || 214);
+  const limit = Number(reqUrl.searchParams.get('limit') || 8);
+  await ensureTgRegionMap();
+
+  if (!history.length) {
+    try {
+      const upstreamRows = await fetchWidgetUpstream(tg, limit);
+      mergeContacts(upstreamRows);
+    } catch {
+      // ignore
+    }
+  }
+
+  const filtered = history.filter((e) => !tg || e.tg === tg).slice(0, limit);
+  send(
+    res,
+    200,
+    JSON.stringify({
+      tg,
+      updatedAt: Math.floor(Date.now() / 1000),
+      contacts: filtered.map((e) => ({
+        time: e.time,
+        callsign: e.callsign,
+        name: e.name,
+        dmrId: e.dmrId,
+        tg: e.tg,
+        region: e.region || tgRegionMap[String(e.tg)] || '',
+        durationSec: e.durationSec || 0,
+      })),
+    }),
+    'application/json; charset=utf-8'
+  );
+}
+
+async function handleWidgetIngest(req, res) {
+  const payload = await parseBody(req);
+  const events = Array.isArray(payload?.events) ? payload.events : [];
+  await ensureTgRegionMap();
+  mergeContacts(events);
+  send(
+    res,
+    200,
+    JSON.stringify({ ok: true, inserted: events.length, total: history.length }),
+    'application/json; charset=utf-8'
+  );
+}
+
 function handleStatic(req, res, reqUrl) {
   let reqPath = reqUrl.pathname === '/' ? '/index.html' : reqUrl.pathname;
   reqPath = path.normalize(reqPath).replace(/^([.][.][/\\])+/, '');
@@ -106,8 +333,23 @@ function handleStatic(req, res, reqUrl) {
 const server = http.createServer((req, res) => {
   const reqUrl = new URL(req.url, `http://${req.headers.host || `${HOST}:${PORT}`}`);
 
+  if (req.method === 'OPTIONS') {
+    send(res, 204, '');
+    return;
+  }
+
   if (req.method === 'GET' && reqUrl.pathname === '/api/lastheard') {
     handleProxy(req, res, reqUrl);
+    return;
+  }
+
+  if (req.method === 'GET' && reqUrl.pathname === '/widget/contacts') {
+    handleWidgetContacts(req, res, reqUrl);
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/widget/ingest') {
+    handleWidgetIngest(req, res);
     return;
   }
 
@@ -133,6 +375,9 @@ process.on('unhandledRejection', (err) => {
   console.error('Unhandled rejection:', err);
   process.exit(1);
 });
+
+history = loadHistoryFromDisk();
+ensureTgRegionMap();
 
 server.listen(PORT, HOST, () => {
   console.log(`BM widget running on http://${HOST}:${PORT}`);

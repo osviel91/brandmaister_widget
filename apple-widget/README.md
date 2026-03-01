@@ -1,0 +1,40 @@
+# Apple WidgetKit Scaffold
+
+This folder contains a macOS app + WidgetKit extension scaffold that reads contacts from your ZimaOS endpoint.
+
+## Prerequisites
+
+- Full Xcode installed (not only Command Line Tools)
+- Optional: xcodegen (`brew install xcodegen`)
+
+## Generate project
+
+```bash
+cd apple-widget
+xcodegen generate
+```
+
+This creates `BrandMeisterWidgetKit.xcodeproj`.
+
+## Build
+
+```bash
+xcodebuild -project BrandMeisterWidgetKit.xcodeproj -scheme BrandMeisterMac -configuration Debug build
+```
+
+## Configure endpoint
+
+Run the mac app once and set endpoint in the app UI:
+
+- Default: `http://127.0.0.1:8787/widget/contacts`
+- ZimaOS: `http://<zima-ip>:8787/widget/contacts`
+
+The app saves settings in App Group defaults and reloads widget timelines.
+
+## Important
+
+Update these before distribution:
+
+- App Group ID: `group.com.example.brandmeister`
+- Bundle IDs in `project.yml`
+- Signing team in Xcode

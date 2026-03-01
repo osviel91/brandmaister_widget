@@ -1,0 +1,444 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 63;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		18AB93B7B52B7B34E10D95E2 /* BrandMeisterAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209B9EB45C9AF8B733168BEE /* BrandMeisterAPI.swift */; };
+		1FDF0EAD0F0DC675290D67D8 /* BrandMeisterWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D045DAA27A8C787ED6DCCB6 /* BrandMeisterWidgetBundle.swift */; };
+		2C9E845AA7AB1359BA13E83B /* BrandMeisterMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9915E4E90AAD5A60F026505 /* BrandMeisterMacApp.swift */; };
+		2D796B6FCD9E2A62F2544244 /* BrandMeisterWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5F9369958A7E8CA9F468CD04 /* BrandMeisterWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		38E4514F9EFFFF19DD0B89EB /* BrandMeisterModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95BA762D37C63777F7889CC1 /* BrandMeisterModels.swift */; };
+		4C18F2D9FE140257FC410D68 /* BrandMeisterModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95BA762D37C63777F7889CC1 /* BrandMeisterModels.swift */; };
+		52002657EF88C5C225D27FE1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A3A68D91FA71605EAAFCB4E /* ContentView.swift */; };
+		5CDEC4359E9DEB684F44BEB7 /* BrandMeisterAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209B9EB45C9AF8B733168BEE /* BrandMeisterAPI.swift */; };
+		690A3339E891E1EBE2687F1E /* BrandMeisterWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C030BFE312A0FAAF620C4A6 /* BrandMeisterWidget.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		81FA3E0CF4A8EECF28EBB5C3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F88585D6B760665F5454C1D8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0F31F1350C09EFD8AE4BE6F2;
+			remoteInfo = BrandMeisterWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8A64BF6B8C00AB645AACA6EE /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				2D796B6FCD9E2A62F2544244 /* BrandMeisterWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		209B9EB45C9AF8B733168BEE /* BrandMeisterAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMeisterAPI.swift; sourceTree = "<group>"; };
+		22FA010D814BBBC04257FCB0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		2D045DAA27A8C787ED6DCCB6 /* BrandMeisterWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMeisterWidgetBundle.swift; sourceTree = "<group>"; };
+		3C030BFE312A0FAAF620C4A6 /* BrandMeisterWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMeisterWidget.swift; sourceTree = "<group>"; };
+		4ABECEDFE3A8CF8CC309B250 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		5F9369958A7E8CA9F468CD04 /* BrandMeisterWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BrandMeisterWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		95BA762D37C63777F7889CC1 /* BrandMeisterModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMeisterModels.swift; sourceTree = "<group>"; };
+		9A3A68D91FA71605EAAFCB4E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		BCB66E5C47112E235BA93A62 /* BrandMeisterMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = BrandMeisterMac.app; path = BrandMeisterWidgetKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CECE51315C2D931CFAFD1840 /* BrandMeisterWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BrandMeisterWidget.entitlements; sourceTree = "<group>"; };
+		D9915E4E90AAD5A60F026505 /* BrandMeisterMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMeisterMacApp.swift; sourceTree = "<group>"; };
+		FC9BA35D4FDC92C245D7BC94 /* BrandMeisterMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BrandMeisterMac.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		06F64F381811D26EC3175882 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				209B9EB45C9AF8B733168BEE /* BrandMeisterAPI.swift */,
+				95BA762D37C63777F7889CC1 /* BrandMeisterModels.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		7373E54687A32497D4455878 /* WidgetExtension */ = {
+			isa = PBXGroup;
+			children = (
+				CECE51315C2D931CFAFD1840 /* BrandMeisterWidget.entitlements */,
+				3C030BFE312A0FAAF620C4A6 /* BrandMeisterWidget.swift */,
+				2D045DAA27A8C787ED6DCCB6 /* BrandMeisterWidgetBundle.swift */,
+				22FA010D814BBBC04257FCB0 /* Info.plist */,
+			);
+			path = WidgetExtension;
+			sourceTree = "<group>";
+		};
+		907749CD506167C1BDEAC33E = {
+			isa = PBXGroup;
+			children = (
+				A321F8DB54A3422218E9A47A /* MacApp */,
+				06F64F381811D26EC3175882 /* Shared */,
+				7373E54687A32497D4455878 /* WidgetExtension */,
+				C26FC13B150C7DA5D38FDD2E /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A321F8DB54A3422218E9A47A /* MacApp */ = {
+			isa = PBXGroup;
+			children = (
+				FC9BA35D4FDC92C245D7BC94 /* BrandMeisterMac.entitlements */,
+				D9915E4E90AAD5A60F026505 /* BrandMeisterMacApp.swift */,
+				9A3A68D91FA71605EAAFCB4E /* ContentView.swift */,
+				4ABECEDFE3A8CF8CC309B250 /* Info.plist */,
+			);
+			path = MacApp;
+			sourceTree = "<group>";
+		};
+		C26FC13B150C7DA5D38FDD2E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BCB66E5C47112E235BA93A62 /* BrandMeisterMac.app */,
+				5F9369958A7E8CA9F468CD04 /* BrandMeisterWidgetExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0F31F1350C09EFD8AE4BE6F2 /* BrandMeisterWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1F8D6305F99D669B1FE1B981 /* Build configuration list for PBXNativeTarget "BrandMeisterWidgetExtension" */;
+			buildPhases = (
+				A51BFD49B7995750538AC591 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BrandMeisterWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = BrandMeisterWidgetExtension;
+			productReference = 5F9369958A7E8CA9F468CD04 /* BrandMeisterWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		3608C3A7D6B7960445D7D29D /* BrandMeisterMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F0FF32D3AC22B8DBBA474C9A /* Build configuration list for PBXNativeTarget "BrandMeisterMac" */;
+			buildPhases = (
+				E9D9DCDA400C4024511EF056 /* Sources */,
+				8A64BF6B8C00AB645AACA6EE /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				399C5ABE45AF6B686426A692 /* PBXTargetDependency */,
+			);
+			name = BrandMeisterMac;
+			packageProductDependencies = (
+			);
+			productName = BrandMeisterMac;
+			productReference = BCB66E5C47112E235BA93A62 /* BrandMeisterMac.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F88585D6B760665F5454C1D8 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					0F31F1350C09EFD8AE4BE6F2 = {
+						ProvisioningStyle = Automatic;
+					};
+					3608C3A7D6B7960445D7D29D = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = C2AF2A7E11C0F9236FC8DB11 /* Build configuration list for PBXProject "BrandMeisterWidgetKit" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 907749CD506167C1BDEAC33E;
+			minimizedProjectReferenceProxies = 1;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				3608C3A7D6B7960445D7D29D /* BrandMeisterMac */,
+				0F31F1350C09EFD8AE4BE6F2 /* BrandMeisterWidgetExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A51BFD49B7995750538AC591 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				18AB93B7B52B7B34E10D95E2 /* BrandMeisterAPI.swift in Sources */,
+				38E4514F9EFFFF19DD0B89EB /* BrandMeisterModels.swift in Sources */,
+				690A3339E891E1EBE2687F1E /* BrandMeisterWidget.swift in Sources */,
+				1FDF0EAD0F0DC675290D67D8 /* BrandMeisterWidgetBundle.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E9D9DCDA400C4024511EF056 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5CDEC4359E9DEB684F44BEB7 /* BrandMeisterAPI.swift in Sources */,
+				2C9E845AA7AB1359BA13E83B /* BrandMeisterMacApp.swift in Sources */,
+				4C18F2D9FE140257FC410D68 /* BrandMeisterModels.swift in Sources */,
+				52002657EF88C5C225D27FE1 /* ContentView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		399C5ABE45AF6B686426A692 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0F31F1350C09EFD8AE4BE6F2 /* BrandMeisterWidgetExtension */;
+			targetProxy = 81FA3E0CF4A8EECF28EBB5C3 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		72C7F61C083F162383911C0F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = MacApp/BrandMeisterMac.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = MacApp/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.BrandMeisterMac;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		AEF792ED71545393BF9D3145 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = BrandMeisterWidgetKit;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.1;
+			};
+			name = Release;
+		};
+		BDF499EAE68F4FDDBE4F748B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = BrandMeisterWidgetKit;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.1;
+			};
+			name = Debug;
+		};
+		CC8DB3C19FAB57F8D9A261BD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = WidgetExtension/BrandMeisterWidget.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = WidgetExtension/Info.plist;
+				INFOPLIST_KEY_NSExtensionPointIdentifier = "com.apple.widgetkit-extension";
+				INFOPLIST_KEY_NSExtensionPrincipalClass = "$(PRODUCT_MODULE_NAME).BrandMeisterWidgetBundle";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.BrandMeisterWidgetExtension;
+				PRODUCT_NAME = BrandMeisterWidgetExtension;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		D6A201D2E28BD345184F9661 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = MacApp/BrandMeisterMac.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = MacApp/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.BrandMeisterMac;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		D70A1C6DDA6F30B7FFE5B725 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = WidgetExtension/BrandMeisterWidget.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = WidgetExtension/Info.plist;
+				INFOPLIST_KEY_NSExtensionPointIdentifier = "com.apple.widgetkit-extension";
+				INFOPLIST_KEY_NSExtensionPrincipalClass = "$(PRODUCT_MODULE_NAME).BrandMeisterWidgetBundle";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.BrandMeisterWidgetExtension;
+				PRODUCT_NAME = BrandMeisterWidgetExtension;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1F8D6305F99D669B1FE1B981 /* Build configuration list for PBXNativeTarget "BrandMeisterWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D70A1C6DDA6F30B7FFE5B725 /* Debug */,
+				CC8DB3C19FAB57F8D9A261BD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C2AF2A7E11C0F9236FC8DB11 /* Build configuration list for PBXProject "BrandMeisterWidgetKit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BDF499EAE68F4FDDBE4F748B /* Debug */,
+				AEF792ED71545393BF9D3145 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F0FF32D3AC22B8DBBA474C9A /* Build configuration list for PBXNativeTarget "BrandMeisterMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D6A201D2E28BD345184F9661 /* Debug */,
+				72C7F61C083F162383911C0F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F88585D6B760665F5454C1D8 /* Project object */;
+}

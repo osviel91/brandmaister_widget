@@ -1,0 +1,57 @@
+name: BrandMeisterWidgetKit
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    macOS: "14.0"
+settings:
+  base:
+    SWIFT_VERSION: 5.10
+    PRODUCT_NAME: BrandMeisterWidgetKit
+    CODE_SIGN_STYLE: Automatic
+
+targets:
+  BrandMeisterMac:
+    type: application
+    platform: macOS
+    sources:
+      - path: MacApp
+      - path: Shared
+    info:
+      path: MacApp/Info.plist
+      properties:
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    entitlements:
+      path: MacApp/BrandMeisterMac.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.BrandMeisterMac
+    dependencies:
+      - target: BrandMeisterWidgetExtension
+        embed: true
+
+  BrandMeisterWidgetExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: WidgetExtension
+      - path: Shared
+    info:
+      path: WidgetExtension/Info.plist
+    entitlements:
+      path: WidgetExtension/BrandMeisterWidget.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.BrandMeisterWidgetExtension
+        PRODUCT_NAME: BrandMeisterWidgetExtension
+        INFOPLIST_KEY_NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        INFOPLIST_KEY_NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).BrandMeisterWidgetBundle"
+
+schemes:
+  BrandMeisterMac:
+    build:
+      targets:
+        BrandMeisterMac: all
+        BrandMeisterWidgetExtension: all
+    run:
+      config: Debug
