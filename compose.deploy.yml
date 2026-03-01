@@ -20,4 +20,8 @@ services:
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    command: --interval 120 --label-enable --cleanup
+    command:
+      - --interval
+      - "120"
+      - --label-enable
+      - --cleanup
