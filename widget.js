@@ -146,6 +146,19 @@ async function loadTalkgroupRegions(config) {
   }
 }
 
+async function pushEventsToServer(events) {
+  if (!Array.isArray(events) || !events.length) return;
+  try {
+    await fetch('/widget/ingest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ events }),
+    });
+  } catch {
+    // Server-side history sync is best-effort.
+  }
+}
+
 function setStatus(text, tone = "idle") {
   els.status.textContent = text;
   els.status.className = `status status--${tone}`;
@@ -662,6 +675,7 @@ function connectSocket(config) {
       buffer.push(...batch);
       if (buffer.length > 250) buffer.shift();
       mergeHistory(batch);
+      pushEventsToServer(batch);
       renderRows(
         historyEvents,
         Number(config.talkgroup),
@@ -828,6 +842,7 @@ function connectWebSocket(config) {
         buffer.push(...batch);
         noteEvents(batch.length);
         mergeHistory(batch);
+        pushEventsToServer(batch);
       } catch {
         // Some feeds emit non-JSON control frames.
         return;
