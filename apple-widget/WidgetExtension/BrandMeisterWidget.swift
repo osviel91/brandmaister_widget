@@ -104,6 +104,6 @@ struct BrandMeisterWidget: Widget {
         }
         .configurationDisplayName("BrandMeister Contacts")
         .description("Recent contacts for your selected talkgroup")
-        .supportedFamilies([.systemMedium, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }

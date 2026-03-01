@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -16,6 +16,8 @@
 		52002657EF88C5C225D27FE1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A3A68D91FA71605EAAFCB4E /* ContentView.swift */; };
 		5CDEC4359E9DEB684F44BEB7 /* BrandMeisterAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209B9EB45C9AF8B733168BEE /* BrandMeisterAPI.swift */; };
 		690A3339E891E1EBE2687F1E /* BrandMeisterWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C030BFE312A0FAAF620C4A6 /* BrandMeisterWidget.swift */; };
+		C0B574247FCCE2D26729A272 /* ConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C49252AB24A06462FC1EF0F9 /* ConfigStore.swift */; };
+		C35E6934F2D0C314BE5B2701 /* ConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C49252AB24A06462FC1EF0F9 /* ConfigStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,7 +53,8 @@
 		5F9369958A7E8CA9F468CD04 /* BrandMeisterWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BrandMeisterWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		95BA762D37C63777F7889CC1 /* BrandMeisterModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMeisterModels.swift; sourceTree = "<group>"; };
 		9A3A68D91FA71605EAAFCB4E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		BCB66E5C47112E235BA93A62 /* BrandMeisterMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = BrandMeisterMac.app; path = BrandMeisterWidgetKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BCB66E5C47112E235BA93A62 /* BrandMeisterMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BrandMeisterMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C49252AB24A06462FC1EF0F9 /* ConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigStore.swift; sourceTree = "<group>"; };
 		CECE51315C2D931CFAFD1840 /* BrandMeisterWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BrandMeisterWidget.entitlements; sourceTree = "<group>"; };
 		D9915E4E90AAD5A60F026505 /* BrandMeisterMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMeisterMacApp.swift; sourceTree = "<group>"; };
 		FC9BA35D4FDC92C245D7BC94 /* BrandMeisterMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BrandMeisterMac.entitlements; sourceTree = "<group>"; };
@@ -63,6 +66,7 @@
 			children = (
 				209B9EB45C9AF8B733168BEE /* BrandMeisterAPI.swift */,
 				95BA762D37C63777F7889CC1 /* BrandMeisterModels.swift */,
+				C49252AB24A06462FC1EF0F9 /* ConfigStore.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -174,6 +178,7 @@
 			);
 			mainGroup = 907749CD506167C1BDEAC33E;
 			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -192,6 +197,7 @@
 				38E4514F9EFFFF19DD0B89EB /* BrandMeisterModels.swift in Sources */,
 				690A3339E891E1EBE2687F1E /* BrandMeisterWidget.swift in Sources */,
 				1FDF0EAD0F0DC675290D67D8 /* BrandMeisterWidgetBundle.swift in Sources */,
+				C35E6934F2D0C314BE5B2701 /* ConfigStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -202,6 +208,7 @@
 				5CDEC4359E9DEB684F44BEB7 /* BrandMeisterAPI.swift in Sources */,
 				2C9E845AA7AB1359BA13E83B /* BrandMeisterMacApp.swift in Sources */,
 				4C18F2D9FE140257FC410D68 /* BrandMeisterModels.swift in Sources */,
+				C0B574247FCCE2D26729A272 /* ConfigStore.swift in Sources */,
 				52002657EF88C5C225D27FE1 /* ContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
