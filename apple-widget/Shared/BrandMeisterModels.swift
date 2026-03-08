@@ -11,7 +11,11 @@ public struct Contact: Codable, Hashable, Identifiable {
     public let durationSec: Int
 
     public var dedupeKey: String {
+<<<<<<< HEAD
         "\(Int(time)):\(dmrId):\(tg):\(callsign)"
+=======
+        "\\(Int(time)):\\(dmrId):\\(tg):\\(callsign)"
+>>>>>>> 23a159dbfa4a4f5f48e3730b57792cc349883956
     }
 }
 
@@ -22,7 +26,11 @@ public struct WidgetContactsResponse: Codable {
 }
 
 public enum WidgetDefaults {
+<<<<<<< HEAD
     public static let appGroup = "group.com.osviel91.brandmeister"
+=======
+    public static let appGroup = "group.com.example.brandmeister"
+>>>>>>> 23a159dbfa4a4f5f48e3730b57792cc349883956
     public static let endpointKey = "bm.endpoint"
     public static let talkgroupKey = "bm.talkgroup"
     public static let maxRowsKey = "bm.maxRows"

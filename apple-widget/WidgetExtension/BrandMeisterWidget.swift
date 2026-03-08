@@ -8,6 +8,7 @@ struct BrandEntry: TimelineEntry {
     let errorText: String?
 }
 
+<<<<<<< HEAD
 private extension BrandEntry {
     static let preview = BrandEntry(
         date: .now,
@@ -27,6 +28,15 @@ struct Provider: TimelineProvider {
 
     func getSnapshot(in context: Context, completion: @escaping (BrandEntry) -> Void) {
         completion(.preview)
+=======
+struct Provider: TimelineProvider {
+    func placeholder(in context: Context) -> BrandEntry {
+        BrandEntry(date: .now, talkgroup: 214, contacts: [], errorText: nil)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (BrandEntry) -> Void) {
+        completion(BrandEntry(date: .now, talkgroup: 214, contacts: [], errorText: nil))
+>>>>>>> 23a159dbfa4a4f5f48e3730b57792cc349883956
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<BrandEntry>) -> Void) {
@@ -58,12 +68,19 @@ struct Provider: TimelineProvider {
 
 struct BrandMeisterWidgetEntryView: View {
     var entry: Provider.Entry
+<<<<<<< HEAD
     @Environment(\.widgetFamily) private var family
+=======
+>>>>>>> 23a159dbfa4a4f5f48e3730b57792cc349883956
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
+<<<<<<< HEAD
                 Text("BM TG \(entry.talkgroup)")
+=======
+                Text("BM TG \\(entry.talkgroup)")
+>>>>>>> 23a159dbfa4a4f5f48e3730b57792cc349883956
                     .font(.headline)
                 Spacer()
                 Text(entry.date, style: .time)
@@ -83,7 +100,11 @@ struct BrandMeisterWidgetEntryView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
+<<<<<<< HEAD
                 ForEach(Array(entry.contacts.prefix(maxVisibleRows).enumerated()), id: \.offset) { _, c in
+=======
+                ForEach(entry.contacts.prefix(4)) { c in
+>>>>>>> 23a159dbfa4a4f5f48e3730b57792cc349883956
                     HStack {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(c.callsign)
@@ -94,9 +115,15 @@ struct BrandMeisterWidgetEntryView: View {
                         }
                         Spacer()
                         VStack(alignment: .trailing, spacing: 1) {
+<<<<<<< HEAD
                             Text("DMR \(c.dmrId)")
                                 .font(.caption2)
                             Text(c.region.isEmpty ? "TG \(c.tg)" : "\(c.region) - TG \(c.tg)")
+=======
+                            Text("DMR \\(c.dmrId)")
+                                .font(.caption2)
+                            Text(c.region.isEmpty ? "TG \\(c.tg)" : "\\(c.region) · TG \\(c.tg)")
+>>>>>>> 23a159dbfa4a4f5f48e3730b57792cc349883956
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -105,6 +132,7 @@ struct BrandMeisterWidgetEntryView: View {
             }
         }
         .padding(12)
+<<<<<<< HEAD
         .containerBackground(.fill.tertiary, for: .widget)
     }
 
@@ -117,6 +145,8 @@ struct BrandMeisterWidgetEntryView: View {
         default:
             return 6
         }
+=======
+>>>>>>> 23a159dbfa4a4f5f48e3730b57792cc349883956
     }
 }
 
@@ -129,6 +159,10 @@ struct BrandMeisterWidget: Widget {
         }
         .configurationDisplayName("BrandMeister Contacts")
         .description("Recent contacts for your selected talkgroup")
+<<<<<<< HEAD
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+=======
+        .supportedFamilies([.systemMedium, .systemLarge])
+>>>>>>> 23a159dbfa4a4f5f48e3730b57792cc349883956
     }
 }

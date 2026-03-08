@@ -6,9 +6,12 @@ struct ContentView: View {
     @State private var talkgroup: Int = ConfigStore.shared.talkgroup
     @State private var maxRows: Int = ConfigStore.shared.maxRows
     @State private var saved = false
+<<<<<<< HEAD
     @State private var contacts: [Contact] = []
     @State private var statusMessage = ""
     @State private var isLoading = false
+=======
+>>>>>>> 23a159dbfa4a4f5f48e3730b57792cc349883956
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -19,12 +22,18 @@ struct ContentView: View {
                 .textFieldStyle(.roundedBorder)
 
             HStack {
+<<<<<<< HEAD
                 Stepper("Talkgroup: \(talkgroup)", value: $talkgroup, in: 1...99999999)
                 Stepper("Rows: \(maxRows)", value: $maxRows, in: 1...20)
+=======
+                Stepper("Talkgroup: \\(talkgroup)", value: $talkgroup, in: 1...99999999)
+                Stepper("Rows: \\(maxRows)", value: $maxRows, in: 1...20)
+>>>>>>> 23a159dbfa4a4f5f48e3730b57792cc349883956
             }
 
             HStack {
                 Button("Save and Refresh Widget") {
+<<<<<<< HEAD
                     saveSettings()
                 }
                 .buttonStyle(.borderedProminent)
@@ -36,15 +45,26 @@ struct ContentView: View {
                 }
                 .disabled(isLoading)
 
+=======
+                    ConfigStore.shared.save(endpoint: endpoint, talkgroup: talkgroup, maxRows: maxRows)
+                    WidgetCenter.shared.reloadAllTimelines()
+                    saved = true
+                }
+                .buttonStyle(.borderedProminent)
+
+>>>>>>> 23a159dbfa4a4f5f48e3730b57792cc349883956
                 if saved {
                     Text("Saved")
                         .foregroundStyle(.green)
                 }
+<<<<<<< HEAD
 
                 if !statusMessage.isEmpty {
                     Text(statusMessage)
                         .foregroundStyle(.secondary)
                 }
+=======
+>>>>>>> 23a159dbfa4a4f5f48e3730b57792cc349883956
             }
 
             Divider()
@@ -53,6 +73,7 @@ struct ContentView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
+<<<<<<< HEAD
             GroupBox("Preview") {
                 if isLoading {
                     ProgressView()
@@ -119,5 +140,10 @@ struct ContentView: View {
             contacts = []
             statusMessage = error.localizedDescription
         }
+=======
+            Spacer()
+        }
+        .padding(20)
+>>>>>>> 23a159dbfa4a4f5f48e3730b57792cc349883956
     }
 }
