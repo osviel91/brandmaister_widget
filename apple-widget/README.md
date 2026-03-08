@@ -29,12 +29,14 @@ Run the mac app once and set endpoint in the app UI:
 - Default: `http://127.0.0.1:8787/widget/contacts`
 - ZimaOS: `http://<zima-ip>:8787/widget/contacts`
 
-The app saves settings in App Group defaults and reloads widget timelines.
+The app saves settings in App Group defaults, lets you test the endpoint from the macOS app, and reloads widget timelines.
 
 ## Important
 
 Update these before distribution:
 
-- App Group ID: `group.com.example.brandmeister`
+- App Group ID: `group.com.osviel91.brandmeister`
 - Bundle IDs in `project.yml`
 - Signing team in Xcode
+
+Both the macOS app and the widget extension already include matching App Group entitlements; if you change the group ID, update it in `Shared/BrandMeisterModels.swift`, `MacApp/BrandMeisterMac.entitlements`, and `WidgetExtension/BrandMeisterWidget.entitlements`.

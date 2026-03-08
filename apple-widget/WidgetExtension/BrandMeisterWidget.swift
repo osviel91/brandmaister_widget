@@ -8,13 +8,25 @@ struct BrandEntry: TimelineEntry {
     let errorText: String?
 }
 
+private extension BrandEntry {
+    static let preview = BrandEntry(
+        date: .now,
+        talkgroup: 214,
+        contacts: [
+            Contact(time: Date().timeIntervalSince1970, callsign: "EA4CQH", name: "Gregorio", dmrId: "2143971", tg: 214, region: "Spain", durationSec: 12),
+            Contact(time: Date().addingTimeInterval(-90).timeIntervalSince1970, callsign: "K1ABC", name: "Alex", dmrId: "3101001", tg: 214, region: "Spain", durationSec: 4),
+        ],
+        errorText: nil
+    )
+}
+
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> BrandEntry {
-        BrandEntry(date: .now, talkgroup: 214, contacts: [], errorText: nil)
+        .preview
     }
 
     func getSnapshot(in context: Context, completion: @escaping (BrandEntry) -> Void) {
-        completion(BrandEntry(date: .now, talkgroup: 214, contacts: [], errorText: nil))
+        completion(.preview)
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<BrandEntry>) -> Void) {
@@ -46,11 +58,12 @@ struct Provider: TimelineProvider {
 
 struct BrandMeisterWidgetEntryView: View {
     var entry: Provider.Entry
+    @Environment(\.widgetFamily) private var family
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("BM TG \\(entry.talkgroup)")
+                Text("BM TG \(entry.talkgroup)")
                     .font(.headline)
                 Spacer()
                 Text(entry.date, style: .time)
@@ -70,7 +83,7 @@ struct BrandMeisterWidgetEntryView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(entry.contacts.prefix(4)) { c in
+                ForEach(Array(entry.contacts.prefix(maxVisibleRows).enumerated()), id: \.offset) { _, c in
                     HStack {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(c.callsign)
@@ -81,9 +94,9 @@ struct BrandMeisterWidgetEntryView: View {
                         }
                         Spacer()
                         VStack(alignment: .trailing, spacing: 1) {
-                            Text("DMR \\(c.dmrId)")
+                            Text("DMR \(c.dmrId)")
                                 .font(.caption2)
-                            Text(c.region.isEmpty ? "TG \\(c.tg)" : "\\(c.region) · TG \\(c.tg)")
+                            Text(c.region.isEmpty ? "TG \(c.tg)" : "\(c.region) - TG \(c.tg)")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -92,6 +105,18 @@ struct BrandMeisterWidgetEntryView: View {
             }
         }
         .padding(12)
+        .containerBackground(.fill.tertiary, for: .widget)
+    }
+
+    private var maxVisibleRows: Int {
+        switch family {
+        case .systemSmall:
+            return 3
+        case .systemMedium:
+            return 4
+        default:
+            return 6
+        }
     }
 }
 

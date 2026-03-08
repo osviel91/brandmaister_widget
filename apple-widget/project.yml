@@ -1,12 +1,11 @@
 name: BrandMeisterWidgetKit
 options:
-  bundleIdPrefix: com.example
+  bundleIdPrefix: com.osviel91
   deploymentTarget:
     macOS: "14.0"
 settings:
   base:
     SWIFT_VERSION: 5.10
-    PRODUCT_NAME: BrandMeisterWidgetKit
     CODE_SIGN_STYLE: Automatic
 
 targets:
@@ -25,7 +24,8 @@ targets:
       path: MacApp/BrandMeisterMac.entitlements
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.BrandMeisterMac
+        PRODUCT_NAME: BrandMeisterMac
+        PRODUCT_BUNDLE_IDENTIFIER: com.osviel91.BrandMeisterMac
     dependencies:
       - target: BrandMeisterWidgetExtension
         embed: true
@@ -42,10 +42,8 @@ targets:
       path: WidgetExtension/BrandMeisterWidget.entitlements
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.BrandMeisterWidgetExtension
+        PRODUCT_BUNDLE_IDENTIFIER: com.osviel91.BrandMeisterWidgetExtension
         PRODUCT_NAME: BrandMeisterWidgetExtension
-        INFOPLIST_KEY_NSExtensionPointIdentifier: com.apple.widgetkit-extension
-        INFOPLIST_KEY_NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).BrandMeisterWidgetBundle"
 
 schemes:
   BrandMeisterMac:

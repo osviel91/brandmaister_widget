@@ -11,7 +11,7 @@ public struct Contact: Codable, Hashable, Identifiable {
     public let durationSec: Int
 
     public var dedupeKey: String {
-        "\\(Int(time)):\\(dmrId):\\(tg):\\(callsign)"
+        "\(Int(time)):\(dmrId):\(tg):\(callsign)"
     }
 }
 
@@ -22,7 +22,7 @@ public struct WidgetContactsResponse: Codable {
 }
 
 public enum WidgetDefaults {
-    public static let appGroup = "group.com.example.brandmeister"
+    public static let appGroup = "group.com.osviel91.brandmeister"
     public static let endpointKey = "bm.endpoint"
     public static let talkgroupKey = "bm.talkgroup"
     public static let maxRowsKey = "bm.maxRows"
