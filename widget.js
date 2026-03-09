@@ -22,6 +22,7 @@ const els = {
   endpointInput: document.getElementById("endpointInput"),
   authModeInput: document.getElementById("authModeInput"),
   apiKeyInput: document.getElementById("apiKeyInput"),
+  widgetTokenInput: document.getElementById("widgetTokenInput"),
   applyBtn: document.getElementById("applyBtn"),
   clearLogBtn: document.getElementById("clearLogBtn"),
   configBtn: document.getElementById("configBtn"),
@@ -50,6 +51,7 @@ const defaults = {
   showDebug: false,
   authMode: "none",
   apiKey: "",
+  widgetToken: "",
 };
 
 function normalizeEndpointTemplate(endpoint) {
@@ -124,6 +126,14 @@ function mergeHistory(rawEvents) {
   saveHistory(historyEvents);
 }
 
+function getServiceAuthHeaders(config) {
+  const token = String(config?.widgetToken || "").trim();
+  if (!token) return {};
+  return {
+    "X-Widget-Token": token,
+  };
+}
+
 async function loadTalkgroupRegions(config) {
   try {
     const proxyUrl = new URL("/api/lastheard", window.location.origin);
@@ -134,6 +144,7 @@ async function loadTalkgroupRegions(config) {
         "X-Upstream-Url": "https://api.brandmeister.network/v2/talkgroup",
         "X-Auth-Mode": config.authMode || "none",
         "X-Api-Key": config.apiKey || "",
+        ...getServiceAuthHeaders(config),
       },
     });
     if (!response.ok) return;
@@ -146,12 +157,15 @@ async function loadTalkgroupRegions(config) {
   }
 }
 
-async function pushEventsToServer(events) {
+async function pushEventsToServer(events, config) {
   if (!Array.isArray(events) || !events.length) return;
   try {
     await fetch('/widget/ingest', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...getServiceAuthHeaders(config),
+      },
       body: JSON.stringify({ events }),
     });
   } catch {
@@ -616,6 +630,7 @@ async function fetchRest(config) {
     "X-Upstream-Url": config.endpoint,
     "X-Auth-Mode": config.authMode,
     "X-Api-Key": config.apiKey,
+    ...getServiceAuthHeaders(config),
   };
 
   const proxyResponse = await fetch(proxyUrl.toString(), { headers: proxyHeaders });
@@ -675,7 +690,7 @@ function connectSocket(config) {
       buffer.push(...batch);
       if (buffer.length > 250) buffer.shift();
       mergeHistory(batch);
-      pushEventsToServer(batch);
+      pushEventsToServer(batch, config);
       renderRows(
         historyEvents,
         Number(config.talkgroup),
@@ -842,7 +857,7 @@ function connectWebSocket(config) {
         buffer.push(...batch);
         noteEvents(batch.length);
         mergeHistory(batch);
-        pushEventsToServer(batch);
+        pushEventsToServer(batch, config);
       } catch {
         // Some feeds emit non-JSON control frames.
         return;
@@ -921,6 +936,7 @@ function applyAndStart() {
     endpoint: normalizeEndpointTemplate(els.endpointInput.value.trim()),
     authMode: els.authModeInput.value,
     apiKey: els.apiKeyInput.value.trim(),
+    widgetToken: els.widgetTokenInput.value.trim(),
   };
 
   saveConfig(config);
@@ -949,6 +965,7 @@ function bootstrap() {
   els.endpointInput.value = normalizeEndpointTemplate(config.endpoint);
   els.authModeInput.value = config.authMode;
   els.apiKeyInput.value = config.apiKey;
+  els.widgetTokenInput.value = config.widgetToken || "";
 
   loadTalkgroupRegions(config);
   setInterval(updateEventsRate, 1000);

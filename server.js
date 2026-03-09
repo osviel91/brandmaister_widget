@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { URL } = require('url');
 
 const HOST = process.env.HOST || '0.0.0.0';
@@ -10,6 +11,7 @@ const HISTORY_PATH = process.env.BM_HISTORY_PATH || path.join(ROOT, 'widget-hist
 const HISTORY_LIMIT = Number(process.env.BM_HISTORY_LIMIT || 5000);
 const WIDGET_UPSTREAM = process.env.BM_WIDGET_UPSTREAM || '';
 const TG_REGION_UPSTREAM = process.env.BM_TG_REGION_UPSTREAM || 'https://api.brandmeister.network/v2/talkgroup';
+const TOKEN_SEED = process.env.BM_TOKEN_SEED || '';
 
 const CONTENT_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -32,10 +34,74 @@ function send(res, status, body, contentType = 'text/plain; charset=utf-8') {
   res.writeHead(status, {
     'Content-Type': contentType,
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Accept, Authorization, X-API-Key, apiKey',
+    'Access-Control-Allow-Headers':
+      'Content-Type, Accept, Authorization, X-API-Key, apiKey, X-Widget-Token',
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
   });
   res.end(body);
+}
+
+function base64urlToBuffer(value) {
+  if (typeof value !== 'string' || !value.length) return null;
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+  try {
+    return Buffer.from(padded, 'base64');
+  } catch {
+    return null;
+  }
+}
+
+function readWidgetToken(req) {
+  const fromHeader = String(req.headers['x-widget-token'] || '').trim();
+  if (fromHeader) return fromHeader;
+  const auth = String(req.headers.authorization || '').trim();
+  const m = auth.match(/^Bearer\s+(.+)$/i);
+  return m ? m[1].trim() : '';
+}
+
+function verifyWidgetToken(token) {
+  if (!TOKEN_SEED) return true;
+  if (!token) return false;
+  const parts = token.split('.');
+  if (parts.length !== 2) return false;
+  const [payloadB64, sigB64] = parts;
+  if (!payloadB64 || !sigB64) return false;
+
+  const expectedSig = crypto.createHmac('sha256', TOKEN_SEED).update(payloadB64).digest();
+  const tokenSig = base64urlToBuffer(sigB64);
+  if (!tokenSig || tokenSig.length !== expectedSig.length) return false;
+  if (!crypto.timingSafeEqual(tokenSig, expectedSig)) return false;
+
+  const payloadBuffer = base64urlToBuffer(payloadB64);
+  if (!payloadBuffer) return false;
+
+  let payload = null;
+  try {
+    payload = JSON.parse(payloadBuffer.toString('utf8'));
+  } catch {
+    return false;
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  if (payload && typeof payload === 'object') {
+    if (payload.nbf != null && Number(payload.nbf) > now) return false;
+    if (payload.exp != null && Number(payload.exp) < now) return false;
+  }
+  return true;
+}
+
+function ensureAuthorized(req, res) {
+  if (!TOKEN_SEED) return true;
+  const token = readWidgetToken(req);
+  if (verifyWidgetToken(token)) return true;
+  send(
+    res,
+    401,
+    JSON.stringify({ error: 'Unauthorized. Missing or invalid widget token.' }),
+    'application/json; charset=utf-8'
+  );
+  return false;
 }
 
 function buildUpstreamUrl(template, talkgroup, limit) {
@@ -339,16 +405,19 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.method === 'GET' && reqUrl.pathname === '/api/lastheard') {
+    if (!ensureAuthorized(req, res)) return;
     handleProxy(req, res, reqUrl);
     return;
   }
 
   if (req.method === 'GET' && reqUrl.pathname === '/widget/contacts') {
+    if (!ensureAuthorized(req, res)) return;
     handleWidgetContacts(req, res, reqUrl);
     return;
   }
 
   if (req.method === 'POST' && reqUrl.pathname === '/widget/ingest') {
+    if (!ensureAuthorized(req, res)) return;
     handleWidgetIngest(req, res);
     return;
   }

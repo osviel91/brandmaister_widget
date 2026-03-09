@@ -1,0 +1,488 @@
+substitutions:
+  server_host: "192.168.31.144"
+  server_port: "8787"
+  talkgroup: "214"
+  widget_token: ""
+
+esphome:
+  name: brandmaistercyd
+  friendly_name: BrandmaisterCyd
+  on_boot:
+    priority: -10
+    then:
+      - light.turn_on: backlight
+      - delay: 3s
+      - script.execute: fetch_contacts
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+logger:
+api:
+  encryption:
+    key: "/xq0tL/1bDw/8MBbJpmUwbKaY/QrLRfKzoL8Pq9dtBk="
+
+ota:
+  - platform: esphome
+    password: "95f8db386f6bb984b06fd675ee43cd43"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: false
+  reboot_timeout: 0s
+
+  ap:
+    ssid: "Brandmaistercyd Fallback Hotspot"
+    password: "YtOnqhPX0i9Q"
+    ap_timeout: 0s
+
+captive_portal:
+web_server:
+  port: 80
+
+time:
+  - platform: sntp
+    id: sntp_time
+
+spi:
+  - id: tft_spi
+    clk_pin: GPIO14
+    mosi_pin: GPIO13
+  - id: touch_spi
+    clk_pin: GPIO25
+    mosi_pin: GPIO32
+    miso_pin: GPIO39
+
+touchscreen:
+  - platform: xpt2046
+    id: cyd_touch
+    spi_id: touch_spi
+    cs_pin: GPIO33
+    # Some CYD clones have noisy/incorrect IRQ wiring; polling is more reliable.
+    update_interval: 200ms
+    threshold: 300
+    calibration:
+      x_min: 200
+      x_max: 3900
+      y_min: 200
+      y_max: 3900
+    transform:
+      swap_xy: true
+      mirror_x: false
+      mirror_y: false
+    on_touch:
+      - lambda: |-
+          const int x = touch.x;
+          const int y = touch.y;
+          if (x < 5 && y < 5) return;
+          if (x > 239 || y > 319) return;
+
+          // Open keypad when TG area in header is touched.
+          if (!id(show_keypad) && x >= 138 && x <= 239 && y >= 0 && y <= 40) {
+            id(show_keypad) = true;
+            id(tg_input) = "";
+            return;
+          }
+
+          if (!id(show_keypad)) return;
+
+          // Keypad geometry.
+          const int kx = 18;
+          const int ky = 72;
+          const int kw = 64;
+          const int kh = 48;
+          const int gap = 6;
+
+          auto hit = [&](int col, int row) -> bool {
+            int rx = kx + col * (kw + gap);
+            int ry = ky + row * (kh + gap);
+            return x >= rx && x <= rx + kw && y >= ry && y <= ry + kh;
+          };
+
+          const char *digit = nullptr;
+          if (hit(0, 0)) digit = "1";
+          else if (hit(1, 0)) digit = "2";
+          else if (hit(2, 0)) digit = "3";
+          else if (hit(0, 1)) digit = "4";
+          else if (hit(1, 1)) digit = "5";
+          else if (hit(2, 1)) digit = "6";
+          else if (hit(0, 2)) digit = "7";
+          else if (hit(1, 2)) digit = "8";
+          else if (hit(2, 2)) digit = "9";
+          else if (hit(1, 3)) digit = "0";
+
+          if (digit != nullptr) {
+            if (id(tg_input).size() < 6) id(tg_input) += digit;
+            return;
+          }
+
+          // C key: clear last digit.
+          if (hit(0, 3)) {
+            if (!id(tg_input).empty()) id(tg_input).pop_back();
+            return;
+          }
+
+          // OK key: apply TG.
+          if (hit(2, 3)) {
+            if (!id(tg_input).empty()) {
+              int tg = atoi(id(tg_input).c_str());
+              if (tg > 0) {
+                id(current_tg) = tg;
+                id(status_line) = "TG changed";
+                id(last_refresh_epoch) = 0;
+                id(tg_input) = "";
+                id(show_keypad) = false;
+                id(fetch_contacts).execute();
+                return;
+              }
+            }
+            id(show_keypad) = false;
+            return;
+          }
+
+output:
+  - platform: ledc
+    pin: GPIO21
+    id: backlight_pwm
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    id: backlight
+    restore_mode: ALWAYS_ON
+
+globals:
+  - id: fetch_busy
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  - id: current_tg
+    type: int
+    restore_value: yes
+    initial_value: "${talkgroup}"
+  - id: show_keypad
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  - id: tg_input
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+  - id: onair_callsign
+    type: std::string
+    restore_value: no
+    initial_value: '"Waiting..."'
+  - id: onair_name
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+  - id: onair_dmr
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+  - id: onair_region
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+  - id: onair_duration
+    type: int
+    restore_value: no
+    initial_value: "0"
+  - id: onair_base_duration
+    type: int
+    restore_value: no
+    initial_value: "0"
+  - id: onair_started_epoch
+    type: int
+    restore_value: no
+    initial_value: "0"
+  - id: row1
+    type: std::string
+    restore_value: no
+    initial_value: '"1. --"'
+  - id: row1_meta
+    type: std::string
+    restore_value: no
+    initial_value: '"ID -- | -- | 0s"'
+  - id: row2
+    type: std::string
+    restore_value: no
+    initial_value: '"2. --"'
+  - id: row2_meta
+    type: std::string
+    restore_value: no
+    initial_value: '"ID -- | -- | 0s"'
+  - id: row3
+    type: std::string
+    restore_value: no
+    initial_value: '"3. --"'
+  - id: row3_meta
+    type: std::string
+    restore_value: no
+    initial_value: '"ID -- | -- | 0s"'
+  - id: status_line
+    type: std::string
+    restore_value: no
+    initial_value: '"Booting"'
+  - id: last_refresh_epoch
+    type: int
+    restore_value: no
+    initial_value: "0"
+
+font:
+  - file: "gfonts://Roboto"
+    id: font_tiny
+    size: 13
+  - file: "gfonts://Roboto"
+    id: font_small
+    size: 18
+  - file: "gfonts://Roboto"
+    id: font_big
+    size: 24
+
+color:
+  - id: white
+    red: 100%
+    green: 100%
+    blue: 100%
+  - id: cyan
+    red: 0%
+    green: 90%
+    blue: 100%
+  - id: amber
+    red: 100%
+    green: 70%
+    blue: 20%
+  - id: panel
+    red: 10%
+    green: 10%
+    blue: 14%
+  - id: bg
+    red: 3%
+    green: 3%
+    blue: 5%
+
+http_request:
+  timeout: 8s
+  useragent: esphome-bm-cyd
+  buffer_size_rx: 4096
+  buffer_size_tx: 1024
+
+script:
+  - id: fetch_contacts
+    mode: single
+    then:
+      - lambda: |-
+          if (id(fetch_busy)) return;
+          id(fetch_busy) = true;
+      - http_request.get:
+          url: !lambda |-
+            return "http://${server_host}:${server_port}/widget/contacts?tg=" + std::to_string(id(current_tg)) + "&limit=6";
+          headers:
+            X-Widget-Token: ${widget_token}
+          capture_response: true
+          on_response:
+            then:
+              - lambda: |-
+                  bool parsed_ok = json::parse_json(body, [](JsonObject root) -> bool {
+                    if (!root["contacts"].is<JsonArray>()) {
+                      id(status_line) = "Invalid JSON";
+                      return false;
+                    }
+
+                    JsonArray contacts = root["contacts"].as<JsonArray>();
+                    int now_ts = id(sntp_time).now().is_valid() ? id(sntp_time).now().timestamp : 0;
+                    std::string key1 = "";
+                    std::string key2 = "";
+                    std::string key3 = "";
+                    int recent_count = 0;
+
+                    int i = 0;
+                    for (JsonObject item : contacts) {
+                      if (i >= 6) break;
+
+                      const char *callsign = item["callsign"] | "Unknown";
+                      const char *name = item["name"] | "";
+                      const char *dmr = item["dmrId"] | "";
+                      const char *region = item["region"] | "";
+                      int duration = item["durationSec"] | 0;
+                      std::string callsign_s = std::string(callsign);
+                      std::string name_s = std::string(name);
+                      std::string dmr_s = std::string(dmr);
+                      std::string region_s = std::string(region);
+
+                      if (i == 0) {
+                        if (id(onair_callsign) != callsign_s || id(onair_dmr) != dmr_s) {
+                          id(onair_started_epoch) = now_ts;
+                          id(onair_base_duration) = duration;
+                        } else if (duration > id(onair_base_duration)) {
+                          id(onair_started_epoch) = now_ts;
+                          id(onair_base_duration) = duration;
+                        }
+                        id(onair_callsign) = callsign_s;
+                        if (!name_s.empty() && name_s != callsign_s) {
+                          id(onair_name) = name_s;
+                        } else {
+                          id(onair_name) = "-";
+                        }
+                        id(onair_dmr) = dmr_s;
+                        id(onair_region) = region_s;
+                        id(onair_duration) = duration;
+                      }
+
+                      if (i >= 1 && recent_count < 3) {
+                        std::string dedupe_id = dmr_s.empty() ? callsign_s : dmr_s;
+                        std::string key = dedupe_id;
+                        if (key == key1 || key == key2 || key == key3) {
+                          i++;
+                          continue;
+                        }
+                        std::string main = std::to_string(recent_count + 1) + ". " + callsign_s;
+                        if (!name_s.empty() && name_s != callsign_s) main += " " + name_s;
+                        std::string meta = "ID ";
+                        meta += dmr_s.empty() ? "--" : dmr_s;
+                        meta += " | ";
+                        meta += region_s.empty() ? "--" : region_s;
+                        meta += " | " + std::to_string(duration) + "s";
+                        if (recent_count == 0) {
+                          id(row1) = main;
+                          id(row1_meta) = meta;
+                          key1 = key;
+                        }
+                        if (recent_count == 1) {
+                          id(row2) = main;
+                          id(row2_meta) = meta;
+                          key2 = key;
+                        }
+                        if (recent_count == 2) {
+                          id(row3) = main;
+                          id(row3_meta) = meta;
+                          key3 = key;
+                        }
+                        recent_count++;
+                      }
+                      i++;
+                    }
+
+                    if (i == 0) {
+                      id(status_line) = "No new data";
+                    } else {
+                      id(status_line) = std::to_string(i) + " contacts";
+                    }
+                    id(last_refresh_epoch) = id(sntp_time).now().timestamp;
+                    return true;
+                  });
+
+                  if (!parsed_ok) id(status_line) = "Parse error";
+                  id(fetch_busy) = false;
+          on_error:
+            then:
+              - lambda: |-
+                  id(status_line) = "Network error";
+                  id(fetch_busy) = false;
+
+display:
+  - platform: mipi_spi
+    spi_id: tft_spi
+    model: ST7789V
+    invert_colors: false
+    color_order: rgb
+    color_depth: 16
+    buffer_size: 12%
+    data_rate: 4MHz
+    cs_pin: GPIO15
+    dc_pin: GPIO2
+    reset_pin: GPIO4
+    id: cyd_display
+    rotation: 0
+    auto_clear_enabled: true
+    update_interval: 400ms
+    lambda: |-
+      it.fill(id(bg));
+
+      it.filled_rectangle(2, 2, 236, 30, id(panel));
+      it.print(6, 9, id(font_small), id(amber), "BM");
+      if (id(sntp_time).now().is_valid()) {
+        it.strftime(70, 10, id(font_tiny), id(cyan), "%d/%m %H:%M", id(sntp_time).now());
+      } else {
+        it.print(70, 10, id(font_tiny), id(cyan), "--/-- --:--");
+      }
+      it.printf(160, 9, id(font_small), id(amber), "TG %d", id(current_tg));
+
+      it.filled_rectangle(2, 36, 236, 96, id(panel));
+      it.print(8, 42, id(font_tiny), id(cyan), "ON AIR");
+      it.printf(8, 58, id(font_big), id(white), "%s", id(onair_callsign).c_str());
+      it.printf(8, 84, id(font_tiny), id(white), "%s", id(onair_name).c_str());
+      it.printf(126, 56, id(font_tiny), id(cyan), "ID");
+      it.printf(144, 56, id(font_small), id(white), "%s", id(onair_dmr).c_str());
+      it.printf(126, 78, id(font_tiny), id(cyan), "REG");
+      it.printf(154, 78, id(font_tiny), id(white), "%s", id(onair_region).c_str());
+      it.printf(126, 100, id(font_tiny), id(cyan), "DUR");
+      int live_duration = id(onair_base_duration);
+      if (id(onair_started_epoch) > 0 && id(sntp_time).now().is_valid()) {
+        int elapsed = id(sntp_time).now().timestamp - id(onair_started_epoch);
+        if (elapsed > 0) live_duration += elapsed;
+      }
+      it.printf(154, 100, id(font_small), id(amber), "%ds", live_duration);
+
+      it.filled_rectangle(2, 136, 236, 158, id(panel));
+      it.print(8, 142, id(font_tiny), id(cyan), "RECENT");
+      it.printf(8, 160, id(font_small), id(white), "%s", id(row1).c_str());
+      it.printf(8, 177, id(font_tiny), id(cyan), "%s", id(row1_meta).c_str());
+      it.printf(8, 200, id(font_small), id(white), "%s", id(row2).c_str());
+      it.printf(8, 217, id(font_tiny), id(cyan), "%s", id(row2_meta).c_str());
+      it.printf(8, 240, id(font_small), id(white), "%s", id(row3).c_str());
+      it.printf(8, 257, id(font_tiny), id(cyan), "%s", id(row3_meta).c_str());
+
+      int age = 0;
+      if (id(last_refresh_epoch) > 0 && id(sntp_time).now().is_valid()) {
+        age = id(sntp_time).now().timestamp - id(last_refresh_epoch);
+      }
+      std::string badge = "LIVE";
+      if (id(status_line) == "Network error" || id(status_line) == "Parse error" || id(status_line) == "Invalid JSON") {
+        badge = "NET ERR";
+      } else if (age > 10) {
+        badge = "STALE";
+      }
+      it.printf(8, 299, id(font_tiny), id(cyan), "[%s] %ds | %s", badge.c_str(), age, id(status_line).c_str());
+
+      if (id(show_keypad)) {
+        it.filled_rectangle(0, 0, 240, 320, id(bg));
+        it.filled_rectangle(6, 6, 228, 56, id(panel));
+        it.print(12, 12, id(font_small), id(amber), "SET TALKGROUP");
+        if (id(tg_input).empty()) {
+          it.print(12, 36, id(font_small), id(white), "TG: _");
+        } else {
+          it.printf(12, 36, id(font_small), id(white), "TG: %s", id(tg_input).c_str());
+        }
+
+        const int kx = 18;
+        const int ky = 72;
+        const int kw = 64;
+        const int kh = 48;
+        const int gap = 6;
+
+        auto key = [&](int col, int row, const char *label, bool accent) {
+          int rx = kx + col * (kw + gap);
+          int ry = ky + row * (kh + gap);
+          it.filled_rectangle(rx, ry, kw, kh, id(panel));
+          it.printf(rx + 22, ry + 16, id(font_small), accent ? id(amber) : id(white), "%s", label);
+        };
+
+        key(0, 0, "1", false); key(1, 0, "2", false); key(2, 0, "3", false);
+        key(0, 1, "4", false); key(1, 1, "5", false); key(2, 1, "6", false);
+        key(0, 2, "7", false); key(1, 2, "8", false); key(2, 2, "9", false);
+        key(0, 3, "C", true);  key(1, 3, "0", false); key(2, 3, "OK", true);
+      }
+
+interval:
+  - interval: 1500ms
+    then:
+      - script.execute: fetch_contacts
+
+button:
+  - platform: restart
+    name: "BrandmaisterCyd Restart"

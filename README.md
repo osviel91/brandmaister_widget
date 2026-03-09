@@ -45,6 +45,35 @@ Optional env vars:
 BM_API_KEY=your_token BM_UPSTREAM='https://api.brandmeister.network/v2/talkgroup' node server.js
 ```
 
+### Protect API with signed widget token
+
+Set `BM_TOKEN_SEED` on the server to enforce token auth for:
+
+- `GET /api/lastheard`
+- `GET /widget/contacts`
+- `POST /widget/ingest`
+
+Example:
+
+```bash
+BM_TOKEN_SEED='change-this-seed' node server.js
+```
+
+Token format:
+
+- `base64url(json_payload).base64url(hmac_sha256(seed, base64url_payload))`
+- optional payload fields: `exp` (unix seconds), `nbf` (unix seconds)
+
+Generate token (Node.js):
+
+```bash
+node -e "const c=require('crypto');const seed='change-this-seed';const p={sub:'widget',exp:Math.floor(Date.now()/1000)+86400};const b=Buffer.from(JSON.stringify(p)).toString('base64url');const s=c.createHmac('sha256',seed).update(b).digest('base64url');console.log(b+'.'+s)"
+```
+
+Client header:
+
+- `X-Widget-Token: <token>`
+
 ## WidgetKit API endpoints
 
 Server now exposes:
@@ -134,6 +163,7 @@ Use the controls in the widget:
 - **Endpoint URL**: BrandMeister endpoint template.
 - **Auth mode**: choose how to send API Manager credentials.
 - **API key / token**: value generated in BrandMeister API Manager.
+- **Widget auth token**: signed backend token (required only if `BM_TOKEN_SEED` is enabled).
 - **Poll (sec)**: only used for REST mode.
 - **Clear log**: clears stored contact history in this browser.
 
@@ -207,3 +237,55 @@ curl -H "X-API-Key: YOUR_TOKEN" "https://api.brandmeister.network/docs/"
 ## Make it a desktop widget on macOS
 
 You can embed this in tools like Übersicht/SwiftBar webview wrappers, or just pin it in a browser app window.
+
+## ESP32 Cheap Yellow Display (ESPHome)
+
+This repo now includes a simplified UI for ESP32 CYD in:
+
+- `esphome/brandmaister_cyd.yaml`
+
+The CYD screen shows:
+
+- Header (`BrandMeister CYD`)
+- Status line (`TG + rows + errors`)
+- Last 4 contacts (`callsign`, `TG`, `duration`)
+- Refresh age in seconds
+
+### 1) Edit CYD config
+
+Open `esphome/brandmaister_cyd.yaml` and set:
+
+- `wifi_ssid`
+- `wifi_password`
+- `server_host` (IP where `server.js` runs)
+- `server_port` (default `8787`)
+- `talkgroup` (example `214`)
+- `widget_token` (only if backend runs with `BM_TOKEN_SEED`)
+
+### 2) Run widget backend
+
+From this repo:
+
+```bash
+node server.js
+```
+
+Endpoint used by CYD:
+
+- `http://<server_host>:8787/widget/contacts?tg=<talkgroup>&limit=4`
+
+### 3) Flash via USB with ESPHome
+
+Install ESPHome on your computer, then run:
+
+```bash
+esphome run esphome/brandmaister_cyd.yaml
+```
+
+When prompted, choose your USB serial port (for example `/dev/cu.usbserial-*` on macOS).
+
+After first USB flash, next updates can be done OTA:
+
+```bash
+esphome run esphome/brandmaister_cyd.yaml --device <cyd-ip>
+```
