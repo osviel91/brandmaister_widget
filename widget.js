@@ -25,6 +25,8 @@ const els = {
   authModeInput: document.getElementById("authModeInput"),
   apiKeyInput: document.getElementById("apiKeyInput"),
   widgetTokenInput: document.getElementById("widgetTokenInput"),
+  apiKeyRow: document.getElementById("apiKeyRow"),
+  widgetTokenRow: document.getElementById("widgetTokenRow"),
   applyBtn: document.getElementById("applyBtn"),
   clearLogBtn: document.getElementById("clearLogBtn"),
   configBtn: document.getElementById("configBtn"),
@@ -975,6 +977,20 @@ function applyAndStart() {
   }
 }
 
+function refreshConfigVisibility() {
+  const sourceType = String(els.sourceTypeInput.value || "socket");
+  const authMode = String(els.authModeInput.value || "none");
+
+  // Upstream auth key is only relevant when upstream auth is enabled.
+  const showApiKey = authMode !== "none";
+  if (els.apiKeyRow) els.apiKeyRow.style.display = showApiKey ? "" : "none";
+
+  // Backend token is only relevant when backend endpoints are likely used.
+  // Keep hidden for the common Socket.IO + no-auth flow.
+  const showWidgetToken = sourceType === "rest" || authMode !== "none";
+  if (els.widgetTokenRow) els.widgetTokenRow.style.display = showWidgetToken ? "" : "none";
+}
+
 function bootstrap() {
   const config = loadConfig();
   historyEvents = loadHistory();
@@ -988,6 +1004,7 @@ function bootstrap() {
   els.authModeInput.value = config.authMode;
   els.apiKeyInput.value = config.apiKey;
   els.widgetTokenInput.value = config.widgetToken || "";
+  refreshConfigVisibility();
 
   loadTalkgroupRegions(config);
   setInterval(updateEventsRate, 1000);
@@ -995,8 +1012,11 @@ function bootstrap() {
     if (!els.debugToggleInput.checked) els.debugBox.hidden = true;
   });
   els.configBtn.addEventListener("click", () => {
+    refreshConfigVisibility();
     els.configDialog.showModal();
   });
+  els.sourceTypeInput.addEventListener("change", refreshConfigVisibility);
+  els.authModeInput.addEventListener("change", refreshConfigVisibility);
   els.closeConfigBtn.addEventListener("click", () => {
     if (els.configDialog.open) els.configDialog.close();
   });
