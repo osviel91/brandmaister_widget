@@ -281,7 +281,7 @@ script:
       - http_request.get:
           url: !lambda |-
             return "http://${server_host}:${server_port}/widget/contacts?tg=" + std::to_string(id(current_tg)) + "&limit=6";
-          headers:
+          request_headers:
             X-Widget-Token: ${widget_token}
           capture_response: true
           on_response:

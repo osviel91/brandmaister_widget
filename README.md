@@ -70,6 +70,19 @@ Generate token (Node.js):
 node -e "const c=require('crypto');const seed='change-this-seed';const p={sub:'widget',exp:Math.floor(Date.now()/1000)+86400};const b=Buffer.from(JSON.stringify(p)).toString('base64url');const s=c.createHmac('sha256',seed).update(b).digest('base64url');console.log(b+'.'+s)"
 ```
 
+Generate token (helper script):
+
+```bash
+node scripts/gen-widget-token.js --seed 'change-this-seed' --days 7
+```
+
+Optional examples:
+
+```bash
+node scripts/gen-widget-token.js --seed 'change-this-seed' --sub cyd --days 30 --json
+node scripts/gen-widget-token.js --seed 'change-this-seed' --exp 1773000000 --nbf 1772000000
+```
+
 Client header:
 
 - `X-Widget-Token: <token>`
