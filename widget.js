@@ -160,7 +160,7 @@ async function loadTalkgroupRegions(config) {
 async function pushEventsToServer(events, config) {
   if (!Array.isArray(events) || !events.length) return;
   try {
-    await fetch('/widget/ingest', {
+    const response = await fetch('/widget/ingest', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -168,8 +168,18 @@ async function pushEventsToServer(events, config) {
       },
       body: JSON.stringify({ events }),
     });
+    if (!response.ok) {
+      let details = '';
+      try {
+        details = await response.text();
+      } catch {
+        // ignore
+      }
+      const msg = details?.slice?.(0, 120) || `HTTP ${response.status}`;
+      setStatus(`Ingest failed: ${msg}`, 'warn');
+    }
   } catch {
-    // Server-side history sync is best-effort.
+    setStatus('Ingest failed: network error', 'warn');
   }
 }
 

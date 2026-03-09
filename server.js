@@ -98,6 +98,7 @@ function ensureAuthorized(req, res) {
   if (!TOKEN_SEED) return true;
   const token = readWidgetToken(req);
   if (verifyWidgetToken(token)) return true;
+  console.warn(`Unauthorized request: ${req.method} ${req.url}`);
   send(
     res,
     401,
