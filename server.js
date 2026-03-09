@@ -9,7 +9,10 @@ const PORT = Number(process.env.PORT || 8787);
 const ROOT = __dirname;
 const HISTORY_PATH = process.env.BM_HISTORY_PATH || path.join(ROOT, 'widget-history.json');
 const HISTORY_LIMIT = Number(process.env.BM_HISTORY_LIMIT || 5000);
-const WIDGET_UPSTREAM = process.env.BM_WIDGET_UPSTREAM || '';
+const WIDGET_UPSTREAM =
+  process.env.BM_WIDGET_UPSTREAM ||
+  process.env.BM_UPSTREAM ||
+  'https://api.brandmeister.network/v2/lastheard?limit={limit}';
 const TG_REGION_UPSTREAM = process.env.BM_TG_REGION_UPSTREAM || 'https://api.brandmeister.network/v2/talkgroup';
 const TOKEN_SEED = process.env.BM_TOKEN_SEED || '';
 
@@ -251,7 +254,6 @@ async function ensureTgRegionMap() {
 }
 
 async function fetchWidgetUpstream(tg, limit) {
-  if (!WIDGET_UPSTREAM) return [];
   const upstreamUrl = buildUpstreamUrl(WIDGET_UPSTREAM, tg, limit);
   const response = await fetch(upstreamUrl, { headers: { Accept: 'application/json' } });
   if (!response.ok) return [];

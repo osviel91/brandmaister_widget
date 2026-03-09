@@ -10,6 +10,10 @@ esphome:
   on_boot:
     priority: -10
     then:
+      - lambda: |-
+          if (id(current_tg) < 100 || id(current_tg) > 999999) {
+            id(current_tg) = atoi("${talkgroup}");
+          }
       - light.turn_on: backlight
       - delay: 3s
       - script.execute: fetch_contacts
@@ -78,11 +82,34 @@ touchscreen:
           const int x = touch.x;
           const int y = touch.y;
           if (x < 5 && y < 5) return;
-          if (x > 239 || y > 319) return;
+
+          auto clampi = [](int v, int lo, int hi) -> int {
+            if (v < lo) return lo;
+            if (v > hi) return hi;
+            return v;
+          };
+
+          // Direct mapping is valid only if touch is already screen-scaled.
+          const bool has_direct = (x >= 0 && x <= 239 && y >= 0 && y <= 319);
+          const int sx = x;
+          const int sy = y;
+
+          // Raw-derived mappings for controllers returning 0..4095-style values.
+          const int sx_raw = clampi((x - 200) * 239 / (3900 - 200), 0, 239);
+          const int sy_raw = clampi((y - 200) * 319 / (3900 - 200), 0, 319);
+          const int sx_alt = clampi((y - 200) * 239 / (3900 - 200), 0, 239);
+          const int sy_alt = clampi((x - 200) * 319 / (3900 - 200), 0, 319);
 
           // Open keypad when TG area in header is touched.
-          if (!id(show_keypad) && x >= 138 && x <= 239 && y >= 0 && y <= 40) {
+          auto in_tg = [&](int px, int py) -> bool {
+            return px >= 138 && px <= 239 && py >= 0 && py <= 40;
+          };
+          const bool tg_direct = has_direct && in_tg(sx, sy);
+          const bool tg_raw = in_tg(sx_raw, sy_raw);
+          const bool tg_alt = in_tg(sx_alt, sy_alt);
+          if (!id(show_keypad) && (tg_direct || tg_raw || tg_alt)) {
             id(show_keypad) = true;
+            id(status_line) = "TG keypad";
             id(tg_input) = "";
             return;
           }
@@ -99,7 +126,10 @@ touchscreen:
           auto hit = [&](int col, int row) -> bool {
             int rx = kx + col * (kw + gap);
             int ry = ky + row * (kh + gap);
-            return x >= rx && x <= rx + kw && y >= ry && y <= ry + kh;
+            const bool h1 = has_direct && sx >= rx && sx <= rx + kw && sy >= ry && sy <= ry + kh;
+            const bool h2 = sx_raw >= rx && sx_raw <= rx + kw && sy_raw >= ry && sy_raw <= ry + kh;
+            const bool h3 = sx_alt >= rx && sx_alt <= rx + kw && sy_alt >= ry && sy_alt <= ry + kh;
+            return h1 || h2 || h3;
           };
 
           const char *digit = nullptr;
@@ -129,7 +159,7 @@ touchscreen:
           if (hit(2, 3)) {
             if (!id(tg_input).empty()) {
               int tg = atoi(id(tg_input).c_str());
-              if (tg > 0) {
+              if (tg >= 100 && tg <= 999999) {
                 id(current_tg) = tg;
                 id(status_line) = "TG changed";
                 id(last_refresh_epoch) = 0;
@@ -138,6 +168,7 @@ touchscreen:
                 id(fetch_contacts).execute();
                 return;
               }
+              id(status_line) = "Invalid TG";
             }
             id(show_keypad) = false;
             return;
@@ -268,13 +299,24 @@ color:
 http_request:
   timeout: 8s
   useragent: esphome-bm-cyd
-  buffer_size_rx: 4096
+  buffer_size_rx: 16384
   buffer_size_tx: 1024
 
 script:
+  - id: sanitize_tg
+    mode: restart
+    then:
+      - lambda: |-
+          const int fallback_tg = atoi("${talkgroup}");
+          if (id(current_tg) < 100 || id(current_tg) > 999999) {
+            id(current_tg) = fallback_tg;
+            id(status_line) = "TG reset";
+          }
+
   - id: fetch_contacts
     mode: single
     then:
+      - script.execute: sanitize_tg
       - lambda: |-
           if (id(fetch_busy)) return;
           id(fetch_busy) = true;
@@ -287,9 +329,24 @@ script:
           on_response:
             then:
               - lambda: |-
+                  ESP_LOGD("bm_widget", "HTTP status=%d, len=%u, tg=%d", response->status_code, (unsigned) body.size(), id(current_tg));
+                  if (response->status_code != 200) {
+                    id(status_line) = "HTTP " + std::to_string(response->status_code);
+                    id(fetch_busy) = false;
+                    return;
+                  }
+                  if (body.empty()) {
+                    id(status_line) = "Empty body";
+                    id(fetch_busy) = false;
+                    return;
+                  }
                   bool parsed_ok = json::parse_json(body, [](JsonObject root) -> bool {
+                    if (root["error"].is<const char *>()) {
+                      id(status_line) = std::string("ERR ") + std::string(root["error"].as<const char *>());
+                      return false;
+                    }
                     if (!root["contacts"].is<JsonArray>()) {
-                      id(status_line) = "Invalid JSON";
+                      id(status_line) = "Invalid payload";
                       return false;
                     }
 
@@ -368,7 +425,7 @@ script:
                     }
 
                     if (i == 0) {
-                      id(status_line) = "No new data";
+                      id(status_line) = "No data TG " + std::to_string(id(current_tg));
                     } else {
                       id(status_line) = std::to_string(i) + " contacts";
                     }
@@ -376,7 +433,11 @@ script:
                     return true;
                   });
 
-                  if (!parsed_ok) id(status_line) = "Parse error";
+                  if (!parsed_ok) {
+                    if (id(status_line).rfind("ERR ", 0) != 0 && id(status_line) != "Invalid payload") {
+                      id(status_line) = "Parse error";
+                    }
+                  }
                   id(fetch_busy) = false;
           on_error:
             then:
@@ -399,7 +460,7 @@ display:
     id: cyd_display
     rotation: 0
     auto_clear_enabled: true
-    update_interval: 400ms
+    update_interval: 1s
     lambda: |-
       it.fill(id(bg));
 
@@ -479,9 +540,14 @@ display:
       }
 
 interval:
-  - interval: 1500ms
+  - interval: 3s
     then:
-      - script.execute: fetch_contacts
+      - if:
+          condition:
+            lambda: 'return !id(show_keypad);'
+          then:
+            - script.execute: sanitize_tg
+            - script.execute: fetch_contacts
 
 button:
   - platform: restart
