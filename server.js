@@ -133,6 +133,36 @@ function toEpochMs(value) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
+function toNumberOrNull(value) {
+  if (value == null || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function decodeJsonMaybe(value, depth = 3) {
+  let current = value;
+  for (let i = 0; i < depth; i += 1) {
+    if (typeof current !== 'string') return current;
+    const trimmed = current.trim();
+    if (!trimmed) return current;
+    try {
+      current = JSON.parse(trimmed);
+      continue;
+    } catch {
+      if (trimmed.startsWith('{\\\"') && trimmed.endsWith('}')) {
+        try {
+          current = JSON.parse(`"${trimmed.replace(/"/g, '\\"')}"`);
+          continue;
+        } catch {
+          return current;
+        }
+      }
+      return current;
+    }
+  }
+  return current;
+}
+
 function pick(obj, keys, fallback = null) {
   for (const key of keys) {
     if (obj && obj[key] != null && obj[key] !== '') return obj[key];
@@ -151,17 +181,35 @@ function safeParseJson(value) {
 
 function normalizeIncomingEvent(raw) {
   let event = raw;
-  if (raw && typeof raw.payload === 'string') {
-    const parsedPayload = safeParseJson(raw.payload);
-    if (parsedPayload && typeof parsedPayload === 'object') event = parsedPayload;
+  if (raw?.payload && typeof raw.payload === 'object') event = raw.payload;
+  if (raw?.payload && typeof raw.payload === 'string') {
+    const decoded = decodeJsonMaybe(raw.payload, 4);
+    event = typeof decoded === 'object' && decoded != null ? decoded : raw;
   }
-  if (event && typeof event.payload === 'object') event = event.payload;
   if (typeof event === 'string') {
-    const parsed = safeParseJson(event);
-    if (parsed && typeof parsed === 'object') event = parsed;
+    const decodedEvent = decodeJsonMaybe(event, 4);
+    event = typeof decodedEvent === 'object' && decodedEvent != null ? decodedEvent : raw;
   }
 
-  const tg = Number(
+  const tgText = pick(event, [
+    'DestinationName',
+    'destinationName',
+    'DestinationPointName',
+    'destinationPointName',
+    'DestinationCall',
+    'destinationCall',
+  ]);
+  let tgFromText = null;
+  if (typeof tgText === 'string') {
+    const m = tgText.match(/\((\d{1,8})\)/);
+    if (m) tgFromText = Number(m[1]);
+    if (!Number.isFinite(tgFromText)) {
+      const m2 = tgText.match(/\bTG\s*(\d{1,8})\b/i);
+      if (m2) tgFromText = Number(m2[1]);
+    }
+  }
+
+  const tg = toNumberOrNull(
     pick(event, [
       'tgid',
       'talkgroup',
@@ -169,6 +217,10 @@ function normalizeIncomingEvent(raw) {
       'destinationid',
       'DestinationID',
       'DestinationPointID',
+      'dst',
+      'to',
+      'talkGroup',
+      'talk_group',
       'Number',
       'number',
     ])
@@ -177,7 +229,18 @@ function normalizeIncomingEvent(raw) {
   const timeMs = toEpochMs(
     pick(event, ['timestamp', 'time', 'Time', 'Start', 'start', 'seen', 'last_seen', 'date'])
   );
-  const dmrId = String(pick(event, ['dmrid', 'id', 'src', 'source', 'SourceID', 'radio_id'], ''));
+  const destinationText =
+    pick(event, [
+      'DestinationName',
+      'destinationName',
+      'DestinationPointName',
+      'destinationPointName',
+      'DestinationCall',
+      'destinationCall',
+    ]) || '';
+  const dmrId = String(
+    pick(event, ['dmrid', 'id', 'src', 'source', 'SourceID', 'sourceid', 'subscriber', 'radio_id'], '')
+  );
   const callsign = String(
     pick(event, ['callsign', 'call', 'SourceCall', 'sourceCall', 'source_callsign'], 'Unknown')
   );
@@ -197,11 +260,23 @@ function normalizeIncomingEvent(raw) {
     callsign,
     name,
     dmrId,
-    tg: Number.isFinite(tg) ? tg : 0,
+    tg: Number.isFinite(tg) ? tg : Number.isFinite(tgFromText) ? tgFromText : null,
     region,
     durationSec,
+    destinationText: String(destinationText || ''),
     dedupeKey,
   };
+}
+
+function matchesTalkgroup(entry, tg) {
+  if (!tg) return true;
+  if (entry.tg === tg) return true;
+  const text = String(entry.destinationText || '');
+  if (!text) return false;
+  if (text.includes(`(${tg})`)) return true;
+  if (text.match(new RegExp(`\\bTG\\s*${tg}\\b`, 'i'))) return true;
+  if (text.trim() === String(tg)) return true;
+  return false;
 }
 
 function loadHistoryFromDisk() {
@@ -211,6 +286,21 @@ function loadHistoryFromDisk() {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
   } catch {
+    // Try to recover from partially corrupted files (e.g. conflict markers).
+    try {
+      const raw = fs.readFileSync(HISTORY_PATH, 'utf8');
+      const start = raw.indexOf('[');
+      const end = raw.lastIndexOf(']');
+      if (start >= 0 && end > start) {
+        const maybeArray = raw.slice(start, end + 1);
+        const parsed = JSON.parse(maybeArray);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore
+    }
     return [];
   }
 }
@@ -254,7 +344,9 @@ async function ensureTgRegionMap() {
 }
 
 async function fetchWidgetUpstream(tg, limit) {
-  const upstreamUrl = buildUpstreamUrl(WIDGET_UPSTREAM, tg, limit);
+  // BM lastheard is global and often needs a larger window before TG filtering.
+  const upstreamLimit = Math.max(limit * 40, 250);
+  const upstreamUrl = buildUpstreamUrl(WIDGET_UPSTREAM, tg, upstreamLimit);
   const response = await fetch(upstreamUrl, { headers: { Accept: 'application/json' } });
   if (!response.ok) return [];
   const payload = await response.json();
@@ -343,7 +435,17 @@ async function handleWidgetContacts(req, res, reqUrl) {
     }
   }
 
-  const filtered = history.filter((e) => !tg || e.tg === tg).slice(0, limit);
+  let filtered = history.filter((e) => matchesTalkgroup(e, tg)).slice(0, limit);
+  // If TG-specific list is empty/stale, top up from upstream and filter again.
+  if (filtered.length < limit) {
+    try {
+      const upstreamRows = await fetchWidgetUpstream(tg, limit);
+      mergeContacts(upstreamRows);
+      filtered = history.filter((e) => matchesTalkgroup(e, tg)).slice(0, limit);
+    } catch {
+      // ignore
+    }
+  }
   send(
     res,
     200,
@@ -448,6 +550,7 @@ process.on('unhandledRejection', (err) => {
 });
 
 history = loadHistoryFromDisk();
+if (history.length) saveHistoryToDisk();
 ensureTgRegionMap();
 
 server.listen(PORT, HOST, () => {
