@@ -406,15 +406,15 @@ function setOnAir(ev) {
   const ageMs = Number.isFinite(ev.timestampMs) ? now - ev.timestampMs : Number.NaN;
   const ageSec = Number.isFinite(ageMs) && ageMs >= 0 ? Math.floor(ageMs / 1000) : null;
   const isTxNow = Number.isFinite(ageMs) && ageMs >= 0 && ageMs <= 6000;
-  els.onAirCallsign.textContent = ev.callsign || "-";
-  els.onAirName.textContent = ev.operatorName || "Unknown operator";
+  els.onAirCallsign.textContent = isTxNow ? ev.callsign || "-" : "Waiting...";
+  els.onAirName.textContent = isTxNow ? ev.operatorName || "-" : "-";
   els.onAirTg.textContent = `TG ${ev.tg ?? "-"}`;
-  els.onAirRegion.textContent = `Region ${getRegionForTg(ev.tg) || "-"}`;
-  els.onAirDmr.textContent = `DMR ${ev.dmrId || "-"}`;
+  els.onAirRegion.textContent = isTxNow ? `Region ${getRegionForTg(ev.tg) || "-"}` : "Region -";
+  els.onAirDmr.textContent = isTxNow ? `DMR ${ev.dmrId || "-"}` : "DMR -";
   els.onAirLast.textContent = `Last ${ageSec == null ? "--" : `${ageSec}s ago`}`;
   els.onAirState.textContent = `State ${isTxNow ? "TX NOW" : "IDLE"}`;
   els.onAirState.className = isTxNow ? "txNow" : "";
-  els.onAirTime.textContent = formatTimestamp(ev.timestampMs);
+  els.onAirTime.textContent = isTxNow ? formatTimestamp(ev.timestampMs) : "--:--:--";
 }
 
 function extractEvents(payload) {
