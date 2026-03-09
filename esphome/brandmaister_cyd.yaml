@@ -238,26 +238,50 @@ globals:
     type: std::string
     restore_value: no
     initial_value: '"1. --"'
+  - id: row1_name
+    type: std::string
+    restore_value: no
+    initial_value: '"-"'
   - id: row1_meta
     type: std::string
     restore_value: no
-    initial_value: '"ID -- | -- | 0s"'
+    initial_value: '"ID -- | -- | --:--:--"'
+  - id: row1_age
+    type: int
+    restore_value: no
+    initial_value: "999"
   - id: row2
     type: std::string
     restore_value: no
     initial_value: '"2. --"'
+  - id: row2_name
+    type: std::string
+    restore_value: no
+    initial_value: '"-"'
   - id: row2_meta
     type: std::string
     restore_value: no
-    initial_value: '"ID -- | -- | 0s"'
+    initial_value: '"ID -- | -- | --:--:--"'
+  - id: row2_age
+    type: int
+    restore_value: no
+    initial_value: "999"
   - id: row3
     type: std::string
     restore_value: no
     initial_value: '"3. --"'
+  - id: row3_name
+    type: std::string
+    restore_value: no
+    initial_value: '"-"'
   - id: row3_meta
     type: std::string
     restore_value: no
-    initial_value: '"ID -- | -- | 0s"'
+    initial_value: '"ID -- | -- | --:--:--"'
+  - id: row3_age
+    type: int
+    restore_value: no
+    initial_value: "999"
   - id: status_line
     type: std::string
     restore_value: no
@@ -268,6 +292,9 @@ globals:
     initial_value: "0"
 
 font:
+  - file: "gfonts://Roboto"
+    id: font_micro
+    size: 11
   - file: "gfonts://Roboto"
     id: font_tiny
     size: 13
@@ -291,6 +318,14 @@ color:
     red: 100%
     green: 70%
     blue: 20%
+  - id: green_ok
+    red: 25%
+    green: 95%
+    blue: 35%
+  - id: red_old
+    red: 95%
+    green: 30%
+    blue: 30%
   - id: panel
     red: 10%
     green: 10%
@@ -393,32 +428,62 @@ script:
                       }
 
                       if (i >= 1 && recent_count < 3) {
+                        auto shorten = [](const std::string &s, size_t max_len) -> std::string {
+                          if (s.size() <= max_len) return s;
+                          if (max_len <= 1) return s.substr(0, max_len);
+                          return s.substr(0, max_len - 1) + "~";
+                        };
                         std::string dedupe_id = dmr_s.empty() ? callsign_s : dmr_s;
                         std::string key = dedupe_id;
                         if (key == key1 || key == key2 || key == key3) {
                           i++;
                           continue;
                         }
+                        int heard_ts = item["time"] | 0;
+                        if (heard_ts <= 0) heard_ts = now_ts;
+                        char tbuf[12];
+                        tbuf[0] = '\0';
+                        if (heard_ts > 0) {
+                          time_t tt = heard_ts;
+                          struct tm tmv;
+                          localtime_r(&tt, &tmv);
+                          strftime(tbuf, sizeof(tbuf), "%H:%M:%S", &tmv);
+                        } else {
+                          snprintf(tbuf, sizeof(tbuf), "--:--:--");
+                        }
+                        int recent_age = 999;
+                        if (now_ts > 0 && heard_ts > 0) recent_age = now_ts - heard_ts;
+                        if (recent_age < 0) recent_age = 0;
                         std::string main = std::to_string(recent_count + 1) + ". " + callsign_s;
-                        if (!name_s.empty() && name_s != callsign_s) main += " " + name_s;
+                        std::string name_line = (!name_s.empty() && name_s != callsign_s) ? name_s : "-";
                         std::string meta = "ID ";
                         meta += dmr_s.empty() ? "--" : dmr_s;
                         meta += " | ";
                         meta += region_s.empty() ? "--" : region_s;
-                        meta += " | " + std::to_string(duration) + "s";
+                        meta += " | ";
+                        meta += tbuf;
+                        main = shorten(main, 20);
+                        name_line = shorten(name_line, 16);
+                        meta = shorten(meta, 28);
                         if (recent_count == 0) {
                           id(row1) = main;
+                          id(row1_name) = name_line;
                           id(row1_meta) = meta;
+                          id(row1_age) = recent_age;
                           key1 = key;
                         }
                         if (recent_count == 1) {
                           id(row2) = main;
+                          id(row2_name) = name_line;
                           id(row2_meta) = meta;
+                          id(row2_age) = recent_age;
                           key2 = key;
                         }
                         if (recent_count == 2) {
                           id(row3) = main;
+                          id(row3_name) = name_line;
                           id(row3_meta) = meta;
+                          id(row3_age) = recent_age;
                           key3 = key;
                         }
                         recent_count++;
@@ -467,26 +532,32 @@ display:
       it.fill(id(bg));
 
       it.filled_rectangle(2, 2, 236, 30, id(panel));
-      it.print(6, 9, id(font_small), id(amber), "BM");
+      it.print(6, 10, id(font_tiny), id(amber), "BM");
       if (id(sntp_time).now().is_valid()) {
-        it.strftime(70, 10, id(font_tiny), id(cyan), "%d/%m %H:%M", id(sntp_time).now());
+        it.strftime(76, 11, id(font_micro), id(cyan), "%d/%m %H:%M", id(sntp_time).now());
       } else {
-        it.print(70, 10, id(font_tiny), id(cyan), "--/-- --:--");
+        it.print(76, 11, id(font_micro), id(cyan), "--/-- --:--");
       }
-      it.printf(160, 9, id(font_small), id(amber), "TG %d", id(current_tg));
+      it.printf(166, 10, id(font_tiny), id(amber), "TG %d", id(current_tg));
 
       it.filled_rectangle(2, 36, 236, 96, id(panel));
-      it.print(8, 42, id(font_tiny), id(cyan), "ON AIR");
+      it.start_clipping(2, 36, 236, 96);
+      it.printf(228, 43, id(font_micro), id(cyan), TextAlign::TOP_RIGHT, "ON AIR");
       bool onair_fresh = false;
+      bool onair_hold = false;
       int onair_age = 9999;
+      const int onair_tx_now_sec = 12;
+      const int onair_hold_sec = 120;
       if (id(onair_last_heard_epoch) > 0 && id(sntp_time).now().is_valid()) {
         onair_age = id(sntp_time).now().timestamp - id(onair_last_heard_epoch);
-        onair_fresh = onair_age >= 0 && onair_age <= 6;
+        onair_fresh = onair_age >= 0 && onair_age <= onair_tx_now_sec;
+        onair_hold = onair_age >= 0 && onair_age <= onair_hold_sec;
       }
-      const char *show_callsign = onair_fresh ? id(onair_callsign).c_str() : "Waiting...";
-      const char *show_name = onair_fresh ? id(onair_name).c_str() : "-";
-      const char *show_dmr = onair_fresh ? id(onair_dmr).c_str() : "--";
-      const char *show_region = onair_fresh ? id(onair_region).c_str() : "--";
+      const bool show_station = onair_fresh || onair_hold;
+      const char *show_callsign = show_station ? id(onair_callsign).c_str() : "Waiting...";
+      const char *show_name = show_station ? id(onair_name).c_str() : "-";
+      const char *show_dmr = show_station ? id(onair_dmr).c_str() : "--";
+      const char *show_region = show_station ? id(onair_region).c_str() : "--";
       int shown_age = onair_age >= 0 ? onair_age : 0;
       it.printf(8, 58, id(font_big), id(white), "%s", show_callsign);
       it.printf(8, 84, id(font_tiny), id(white), "%s", show_name);
@@ -496,19 +567,26 @@ display:
       it.printf(126, 78, id(font_tiny), id(cyan), "REG");
       it.printf(154, 78, id(font_tiny), id(white), "%s", show_region);
       it.printf(126, 100, id(font_tiny), id(cyan), "DUR");
-      int live_duration = onair_fresh ? id(onair_duration) : 0;
+      int live_duration = show_station ? id(onair_duration) : 0;
       it.printf(154, 100, id(font_small), id(amber), "%ds", live_duration);
       it.printf(126, 118, id(font_tiny), id(cyan), "STATE");
-      it.printf(170, 118, id(font_tiny), onair_fresh ? id(amber) : id(white), onair_fresh ? "TX NOW" : "IDLE");
+      const char *state_txt = onair_fresh ? "TX NOW" : (onair_hold ? "ACTIVE" : "IDLE");
+      it.printf(170, 118, id(font_tiny), onair_fresh ? id(amber) : id(white), "%s", state_txt);
+      it.end_clipping();
 
       it.filled_rectangle(2, 136, 236, 158, id(panel));
-      it.print(8, 142, id(font_tiny), id(cyan), "RECENT");
-      it.printf(8, 160, id(font_small), id(white), "%s", id(row1).c_str());
-      it.printf(8, 177, id(font_tiny), id(cyan), "%s", id(row1_meta).c_str());
-      it.printf(8, 200, id(font_small), id(white), "%s", id(row2).c_str());
-      it.printf(8, 217, id(font_tiny), id(cyan), "%s", id(row2_meta).c_str());
-      it.printf(8, 240, id(font_small), id(white), "%s", id(row3).c_str());
-      it.printf(8, 257, id(font_tiny), id(cyan), "%s", id(row3_meta).c_str());
+      it.start_clipping(2, 136, 236, 158);
+      it.printf(228, 143, id(font_micro), id(cyan), TextAlign::TOP_RIGHT, "RECENT");
+      it.printf(8, 160, id(font_tiny), id(white), "%s", id(row1).c_str());
+      it.printf(8, 173, id(font_micro), id(row1_age) <= 20 ? id(green_ok) : id(red_old), "%s", id(row1_name).c_str());
+      it.printf(8, 185, id(font_micro), id(cyan), "%s", id(row1_meta).c_str());
+      it.printf(8, 198, id(font_tiny), id(white), "%s", id(row2).c_str());
+      it.printf(8, 211, id(font_micro), id(row2_age) <= 20 ? id(green_ok) : id(red_old), "%s", id(row2_name).c_str());
+      it.printf(8, 223, id(font_micro), id(cyan), "%s", id(row2_meta).c_str());
+      it.printf(8, 236, id(font_tiny), id(white), "%s", id(row3).c_str());
+      it.printf(8, 249, id(font_micro), id(row3_age) <= 20 ? id(green_ok) : id(red_old), "%s", id(row3_name).c_str());
+      it.printf(8, 261, id(font_micro), id(cyan), "%s", id(row3_meta).c_str());
+      it.end_clipping();
 
       int age = 0;
       if (id(last_refresh_epoch) > 0 && id(sntp_time).now().is_valid()) {
@@ -520,7 +598,7 @@ display:
       } else if (age > 10) {
         badge = "STALE";
       }
-      it.printf(8, 299, id(font_tiny), id(cyan), "[%s] %ds | %s", badge.c_str(), age, id(status_line).c_str());
+      it.printf(8, 300, id(font_micro), id(cyan), "[%s] %ds | %s", badge.c_str(), age, id(status_line).c_str());
 
       if (id(show_keypad)) {
         it.filled_rectangle(0, 0, 240, 320, id(bg));
