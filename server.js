@@ -15,6 +15,7 @@ const WIDGET_UPSTREAM =
   'https://api.brandmeister.network/v2/lastheard?limit={limit}';
 const TG_REGION_UPSTREAM = process.env.BM_TG_REGION_UPSTREAM || 'https://api.brandmeister.network/v2/talkgroup';
 const TOKEN_SEED = process.env.BM_TOKEN_SEED || '';
+const INGEST_AUTH_REQUIRED = String(process.env.BM_INGEST_AUTH_REQUIRED || 'false').toLowerCase() === 'true';
 
 const CONTENT_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -522,7 +523,7 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.method === 'POST' && reqUrl.pathname === '/widget/ingest') {
-    if (!ensureAuthorized(req, res)) return;
+    if (INGEST_AUTH_REQUIRED && !ensureAuthorized(req, res)) return;
     handleWidgetIngest(req, res);
     return;
   }
