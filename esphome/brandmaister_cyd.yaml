@@ -222,6 +222,10 @@ globals:
     type: int
     restore_value: no
     initial_value: "0"
+  - id: onair_last_heard_epoch
+    type: int
+    restore_value: no
+    initial_value: "0"
   - id: onair_base_duration
     type: int
     restore_value: no
@@ -372,13 +376,9 @@ script:
                       std::string region_s = std::string(region);
 
                       if (i == 0) {
-                        if (id(onair_callsign) != callsign_s || id(onair_dmr) != dmr_s) {
-                          id(onair_started_epoch) = now_ts;
-                          id(onair_base_duration) = duration;
-                        } else if (duration > id(onair_base_duration)) {
-                          id(onair_started_epoch) = now_ts;
-                          id(onair_base_duration) = duration;
-                        }
+                        int heard_ts = item["time"] | 0;
+                        if (heard_ts <= 0) heard_ts = now_ts;
+                        id(onair_last_heard_epoch) = heard_ts;
                         id(onair_callsign) = callsign_s;
                         if (!name_s.empty() && name_s != callsign_s) {
                           id(onair_name) = name_s;
@@ -388,6 +388,8 @@ script:
                         id(onair_dmr) = dmr_s;
                         id(onair_region) = region_s;
                         id(onair_duration) = duration;
+                        id(onair_started_epoch) = now_ts;
+                        id(onair_base_duration) = duration;
                       }
 
                       if (i >= 1 && recent_count < 3) {
@@ -475,18 +477,24 @@ display:
 
       it.filled_rectangle(2, 36, 236, 96, id(panel));
       it.print(8, 42, id(font_tiny), id(cyan), "ON AIR");
-      it.printf(8, 58, id(font_big), id(white), "%s", id(onair_callsign).c_str());
-      it.printf(8, 84, id(font_tiny), id(white), "%s", id(onair_name).c_str());
-      it.printf(126, 56, id(font_tiny), id(cyan), "ID");
-      it.printf(144, 56, id(font_small), id(white), "%s", id(onair_dmr).c_str());
-      it.printf(126, 78, id(font_tiny), id(cyan), "REG");
-      it.printf(154, 78, id(font_tiny), id(white), "%s", id(onair_region).c_str());
-      it.printf(126, 100, id(font_tiny), id(cyan), "DUR");
-      int live_duration = id(onair_base_duration);
-      if (id(onair_started_epoch) > 0 && id(sntp_time).now().is_valid()) {
-        int elapsed = id(sntp_time).now().timestamp - id(onair_started_epoch);
-        if (elapsed > 0) live_duration += elapsed;
+      bool onair_fresh = false;
+      int onair_age = 9999;
+      if (id(onair_last_heard_epoch) > 0 && id(sntp_time).now().is_valid()) {
+        onair_age = id(sntp_time).now().timestamp - id(onair_last_heard_epoch);
+        onair_fresh = onair_age >= 0 && onair_age <= 6;
       }
+      const char *show_callsign = onair_fresh ? id(onair_callsign).c_str() : "Waiting...";
+      const char *show_name = onair_fresh ? id(onair_name).c_str() : "-";
+      const char *show_dmr = onair_fresh ? id(onair_dmr).c_str() : "--";
+      const char *show_region = onair_fresh ? id(onair_region).c_str() : "--";
+      it.printf(8, 58, id(font_big), id(white), "%s", show_callsign);
+      it.printf(8, 84, id(font_tiny), id(white), "%s", show_name);
+      it.printf(126, 56, id(font_tiny), id(cyan), "ID");
+      it.printf(144, 56, id(font_small), id(white), "%s", show_dmr);
+      it.printf(126, 78, id(font_tiny), id(cyan), "REG");
+      it.printf(154, 78, id(font_tiny), id(white), "%s", show_region);
+      it.printf(126, 100, id(font_tiny), id(cyan), "DUR");
+      int live_duration = onair_fresh ? id(onair_duration) : 0;
       it.printf(154, 100, id(font_small), id(amber), "%ds", live_duration);
 
       it.filled_rectangle(2, 136, 236, 158, id(panel));
