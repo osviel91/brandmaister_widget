@@ -12,6 +12,8 @@ const els = {
   onAirTg: document.getElementById("onAirTg"),
   onAirRegion: document.getElementById("onAirRegion"),
   onAirDmr: document.getElementById("onAirDmr"),
+  onAirLast: document.getElementById("onAirLast"),
+  onAirState: document.getElementById("onAirState"),
   onAirTime: document.getElementById("onAirTime"),
   talkgroupInput: document.getElementById("talkgroupInput"),
   maxRowsInput: document.getElementById("maxRowsInput"),
@@ -394,14 +396,24 @@ function setOnAir(ev) {
     els.onAirTg.textContent = "TG -";
     els.onAirRegion.textContent = "Region -";
     els.onAirDmr.textContent = "DMR -";
+    els.onAirLast.textContent = "Last --";
+    els.onAirState.textContent = "State IDLE";
+    els.onAirState.className = "";
     els.onAirTime.textContent = "--:--:--";
     return;
   }
+  const now = Date.now();
+  const ageMs = Number.isFinite(ev.timestampMs) ? now - ev.timestampMs : Number.NaN;
+  const ageSec = Number.isFinite(ageMs) && ageMs >= 0 ? Math.floor(ageMs / 1000) : null;
+  const isTxNow = Number.isFinite(ageMs) && ageMs >= 0 && ageMs <= 6000;
   els.onAirCallsign.textContent = ev.callsign || "-";
   els.onAirName.textContent = ev.operatorName || "Unknown operator";
   els.onAirTg.textContent = `TG ${ev.tg ?? "-"}`;
   els.onAirRegion.textContent = `Region ${getRegionForTg(ev.tg) || "-"}`;
   els.onAirDmr.textContent = `DMR ${ev.dmrId || "-"}`;
+  els.onAirLast.textContent = `Last ${ageSec == null ? "--" : `${ageSec}s ago`}`;
+  els.onAirState.textContent = `State ${isTxNow ? "TX NOW" : "IDLE"}`;
+  els.onAirState.className = isTxNow ? "txNow" : "";
   els.onAirTime.textContent = formatTimestamp(ev.timestampMs);
 }
 

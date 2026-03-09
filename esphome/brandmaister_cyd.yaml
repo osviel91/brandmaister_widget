@@ -487,8 +487,10 @@ display:
       const char *show_name = onair_fresh ? id(onair_name).c_str() : "-";
       const char *show_dmr = onair_fresh ? id(onair_dmr).c_str() : "--";
       const char *show_region = onair_fresh ? id(onair_region).c_str() : "--";
+      int shown_age = onair_age >= 0 ? onair_age : 0;
       it.printf(8, 58, id(font_big), id(white), "%s", show_callsign);
       it.printf(8, 84, id(font_tiny), id(white), "%s", show_name);
+      it.printf(8, 118, id(font_tiny), id(cyan), "LAST %ds ago", shown_age);
       it.printf(126, 56, id(font_tiny), id(cyan), "ID");
       it.printf(144, 56, id(font_small), id(white), "%s", show_dmr);
       it.printf(126, 78, id(font_tiny), id(cyan), "REG");
@@ -496,6 +498,8 @@ display:
       it.printf(126, 100, id(font_tiny), id(cyan), "DUR");
       int live_duration = onair_fresh ? id(onair_duration) : 0;
       it.printf(154, 100, id(font_small), id(amber), "%ds", live_duration);
+      it.printf(126, 118, id(font_tiny), id(cyan), "STATE");
+      it.printf(170, 118, id(font_tiny), onair_fresh ? id(amber) : id(white), onair_fresh ? "TX NOW" : "IDLE");
 
       it.filled_rectangle(2, 136, 236, 158, id(panel));
       it.print(8, 142, id(font_tiny), id(cyan), "RECENT");

@@ -160,6 +160,11 @@ input[type="checkbox"] {
   color: var(--muted);
 }
 
+.txNow {
+  color: var(--accent) !important;
+  font-weight: 700;
+}
+
 .configDialog {
   border: 1px solid var(--border);
   border-radius: 14px;
